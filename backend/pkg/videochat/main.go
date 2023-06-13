@@ -1,4 +1,4 @@
-package main
+package videochat
 
 import (
 	"fmt"
@@ -12,8 +12,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/pion/rtcp"
 	"github.com/pion/webrtc/v2"
-
-	videochat "chat-go/pkg/videochat"
 )
 
 const (
@@ -25,7 +23,7 @@ type Sdp struct {
 	Sdp string
 }
 
-func main() {
+func SetupVideoChat() {
 	file, err := os.OpenFile("info.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatal(err)
@@ -65,7 +63,7 @@ func main() {
 		}
 
 		offer := webrtc.SessionDescription{}
-		videochat.Decode(session.Sdp, &offer)
+		Decode(session.Sdp, &offer)
 
 		// Create a new RTCPeerConnection
 		// this is the gist of webrtc, generates and process SDP
@@ -92,7 +90,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		c.JSON(http.StatusOK, Sdp{Sdp: videochat.Encode(answer)})
+		c.JSON(http.StatusOK, Sdp{Sdp: Encode(answer)})
 	})
 
 	router.Run(":8081")
