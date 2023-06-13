@@ -12,7 +12,10 @@ class Message extends Component {
   }
 
   render() {
-    return <div className="Message">{this.state.message.body}</div>;
+    return <div className="Message">
+      User Id:{this.state.message.id}  <br />
+      {this.state.message.body} 
+    </div>;
   }
 }
 

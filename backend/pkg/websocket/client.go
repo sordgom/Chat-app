@@ -1,37 +1,38 @@
 package websocket
 
 import (
-    "fmt"
-    "log"
+	"fmt"
+	"log"
 
-    "github.com/gorilla/websocket"
+	"github.com/gorilla/websocket"
 )
 
 type Client struct {
-    ID   string
-    Conn *websocket.Conn
-    Pool *Pool
+	ID   string
+	Conn *websocket.Conn
+	Pool *Pool
 }
 
 type Message struct {
-    Type int    `json:"type"`
-    Body string `json:"body"`
+	Type int    `json:"type"`
+	ID   string `json:"id"`
+	Body string `json:"body"`
 }
 
 func (c *Client) Read() {
-    defer func() {
-        c.Pool.Unregister <- c
-        c.Conn.Close()
-    }()
+	defer func() {
+		c.Pool.Unregister <- c
+		c.Conn.Close()
+	}()
 
-    for {
-        messageType, p, err := c.Conn.ReadMessage()
-        if err != nil {
-            log.Println(err)
-            return
-        }
-        message := Message{Type: messageType, Body: string(p)}
-        c.Pool.Broadcast <- message
-        fmt.Printf("Message Received: %+v\n", message)
-    }
+	for {
+		messageType, p, err := c.Conn.ReadMessage()
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		message := Message{Type: messageType, ID: c.ID, Body: string(p)}
+		c.Pool.Broadcast <- message
+		fmt.Printf("Message Received: %+v\n", message)
+	}
 }
