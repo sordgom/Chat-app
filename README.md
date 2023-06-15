@@ -1,15 +1,14 @@
 # Building a Chat Application in Go with ReactJS
 
-## Goals
+## Achievements
 
-- Created the basic Go application within a backend/ directory.
-- Created a basic ReactJS application within a frontend/ directory.
-- Created a Dockerfile within the backend/ directory.
-  
-## Prerequisites
+- [x] Create a basic frontend to host my services
+- [x] Create a chat app service using Websocket
+- [x] Create a video chat app service using WebRTC
+- [x] Create an authentication service using Redis
 
-You will need npm installed on your machine.
-You will need npx installed on your machine. This can be installed by typing npm install -g npx.
-You will need Go version 1.11+ installed on your machine.
-You will need a code editor such as Visual Studio Code, in which you can develop this project.
+## Todo
 
+- Deploy the services to a cloud provider
+- Make the services scalable
+- Change Redis db to a more suitable/reliable db
