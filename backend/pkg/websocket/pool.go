@@ -1,12 +1,16 @@
 package websocket
 
-import "fmt"
+import (
+	"chat-go/model"
+	"fmt"
+	"log"
+)
 
 type Pool struct {
 	Register   chan *Client
 	Unregister chan *Client
 	Clients    map[*Client]bool
-	Broadcast  chan Message
+	Broadcast  chan *model.Chat
 }
 
 func NewPool() *Pool {
@@ -14,7 +18,7 @@ func NewPool() *Pool {
 		Register:   make(chan *Client),
 		Unregister: make(chan *Client),
 		Clients:    make(map[*Client]bool),
-		Broadcast:  make(chan Message),
+		Broadcast:  make(chan *model.Chat),
 	}
 }
 
@@ -25,22 +29,31 @@ func (pool *Pool) Start() {
 			pool.Clients[client] = true
 			fmt.Println("Size of Connection Pool: ", len(pool.Clients))
 			for client, _ := range pool.Clients {
-				client.Conn.WriteJSON(Message{Type: 1, ID: client.ID, Body: "New User Joined..."})
+				client.Conn.WriteJSON(Message{Type: "bootup", Body: "New User Joined..."})
 			}
 			break
 		case client := <-pool.Unregister:
 			delete(pool.Clients, client)
 			fmt.Println("Size of Connection Pool: ", len(pool.Clients))
 			for client, _ := range pool.Clients {
-				client.Conn.WriteJSON(Message{Type: 1, ID: client.ID, Body: "User Disconnected..."})
+				client.Conn.WriteJSON(Message{Type: "bootup", Body: "User Disconnected..."})
 			}
 			break
 		case message := <-pool.Broadcast:
-			fmt.Println("Sending message to all clients in Pool")
+			// send to every client that is currently connected
+			fmt.Println("new message", message)
 			for client, _ := range pool.Clients {
 				if err := client.Conn.WriteJSON(message); err != nil {
 					fmt.Println(err)
 					return
+				}
+				if client.Username == message.From || client.Username == message.To {
+					err := client.Conn.WriteJSON(message)
+					if err != nil {
+						log.Printf("Websocket error: %s", err)
+						client.Conn.Close()
+						delete(pool.Clients, client)
+					}
 				}
 			}
 		}

@@ -1,13 +1,19 @@
 import React from "react";
-import "./Header.scss";
+import { Box, Flex, Heading } from "@chakra-ui/react";
+import { ColorModeSwitcher } from "./ColorModeSwitcher";
 import { Link } from 'react-router-dom';
 
 const Header = () => (
-  <div className="header">
+  <Flex className="header" alignItems="center" justifyContent="space-between">
     <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-      <h2>Realtime Chat App</h2>
-    </Link>   
-  </div>
+      <Heading size="2xl" font-size={"xl"}>
+        Real time chat application
+      </Heading>
+    </Link>
+    <Box>
+      <ColorModeSwitcher />
+    </Box>
+  </Flex>
 );
 
 export default Header;

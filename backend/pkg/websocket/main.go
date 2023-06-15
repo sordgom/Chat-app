@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"chat-go/pkg/redisrepo"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -19,24 +20,25 @@ func serveWs(pool *Pool, w http.ResponseWriter, r *http.Request) {
 	}
 
 	pool.Register <- client
-	client.Read()
+	go client.Read() // Keep listening for new messages from the client in a separate goroutine
 }
 
 func setupRoutes() {
 	pool := NewPool()
 	go pool.Start()
 
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "Simple Server")
+	})
+
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		serveWs(pool, w, r)
 	})
 }
 
-func main() {
-	setupRoutes()
-	http.ListenAndServe(":8080", nil)
-}
-
 func StartWebsocketServer() {
+	redisClient := redisrepo.InitialiseRedis()
+	defer redisClient.Close()
 	setupRoutes()
 	http.ListenAndServe(":8080", nil)
 }
