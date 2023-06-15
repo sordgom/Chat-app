@@ -179,7 +179,7 @@ class Chat extends Component {
                 />
                 <InputRightElement width="6rem">
                   <Button
-                    colorScheme={'teal'}
+                    colorScheme={'cyan'}
                     h="2rem"
                     size="lg"
                     variant="solid"

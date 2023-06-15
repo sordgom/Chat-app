@@ -17,7 +17,7 @@ function Landing() {
             <Button
               size="lg"
               leftIcon={<EditIcon />}
-              colorScheme="purple"
+              colorScheme="cyan"
               variant="solid"
             >
               Register
@@ -27,7 +27,7 @@ function Landing() {
             <Button
               size="lg"
               rightIcon={<ArrowForwardIcon />}
-              colorScheme="purple"
+              colorScheme="cyan"
               variant="outline"
             >
               Login

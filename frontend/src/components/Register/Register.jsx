@@ -99,7 +99,7 @@ class Register extends Component {
               <Button
                 size="lg"
                 leftIcon={<EditIcon />}
-                colorScheme="green"
+                colorScheme="cyan"
                 variant="solid"
                 type="submit"
                 onClick={this.onSubmit}

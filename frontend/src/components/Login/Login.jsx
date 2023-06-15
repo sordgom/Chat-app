@@ -98,7 +98,7 @@ class Login extends Component {
               <Button
                 size="lg"
                 leftIcon={<EditIcon />}
-                colorScheme="purple"
+                colorScheme="cyan"
                 variant="solid"
                 type="submit"
                 onClick={this.onSubmit}
