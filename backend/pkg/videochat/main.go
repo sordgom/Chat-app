@@ -14,9 +14,26 @@ import (
 	"github.com/pion/webrtc/v2"
 )
 
+type Client struct {
+	ID   string
+	Peer *webrtc.PeerConnection
+}
+
+type Meeting struct {
+	Clients map[string]*Client
+}
+
+func NewMeeting() *Meeting {
+	return &Meeting{
+		Clients: make(map[string]*Client),
+	}
+}
+
 const (
 	rtcpPLIInterval = time.Second * 3
 )
+
+var meetings = make(map[string]*Meeting)
 
 // Sdp represent session description protocol describe media communication sessions
 type Sdp struct {
@@ -51,10 +68,20 @@ func SetupVideoChat() {
 		},
 	}
 
-	router.POST("/webrtc/sdp/m/:meetingId/c/:userID/p/:peerId/s/:isSender", func(c *gin.Context) {
+	router.POST("/webrtc/sdp/m/:meetingId/c/:userId/p/:peerId/s/:isSender", func(c *gin.Context) {
+
+		meetingID := c.Param("meetingId")
 		isSender, _ := strconv.ParseBool(c.Param("isSender"))
-		userID := c.Param("userID")
+		userID := c.Param("userId")
 		peerID := c.Param("peerId")
+
+		// Fetch the meeting using meetingID from meetings map
+		// If the meeting doesn't exist, create a new one
+		meeting, exists := meetings[meetingID]
+		if !exists {
+			meeting = NewMeeting()
+			meetings[meetingID] = meeting
+		}
 
 		var session Sdp
 		if err := c.ShouldBindJSON(&session); err != nil {
@@ -71,8 +98,11 @@ func SetupVideoChat() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		// Add the client to the meeting
+		meeting.Clients[userID] = &Client{ID: userID, Peer: peerConnection}
+
 		if !isSender {
-			recieveTrack(peerConnection, peerConnectionMap, peerID)
+			receiveTrack(peerConnection, peerConnectionMap, peerID)
 		} else {
 			createTrack(peerConnection, peerConnectionMap, userID)
 		}
@@ -99,7 +129,7 @@ func SetupVideoChat() {
 // user is the caller of the method
 // if user connects before peer: create channel and keep listening till track is added
 // if peer connects before user: channel would have been created by peer and track can be added by getting the channel from cache
-func recieveTrack(peerConnection *webrtc.PeerConnection,
+func receiveTrack(peerConnection *webrtc.PeerConnection,
 	peerConnectionMap map[string]chan *webrtc.Track,
 	peerID string) {
 	if _, ok := peerConnectionMap[peerID]; !ok {

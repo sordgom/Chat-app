@@ -24,7 +24,7 @@ class Register extends Component {
       password: '',
       message: '',
       isInvalid: '',
-      endpoint: 'http://localhost:8082/register',
+      endpoint: 'http://localhost:8080/register',
       redirect: false,
       redirectTo: '/chat?u=',
     };

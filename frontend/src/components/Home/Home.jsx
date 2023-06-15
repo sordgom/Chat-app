@@ -1,23 +1,32 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import './Home.scss';
+import { Link as RouterLink } from 'react-router-dom';
+import { Container, Box, Button, VStack, Link } from '@chakra-ui/react';
 
-const HomePage = () => {
+const Home = () => {
+  const queryParams = new URLSearchParams(window.location.search);
+  const user = queryParams.get('u');
+
   return (
-    <div className="home-page">
-      <div className="component-window">
-        <h2>Video Chat</h2>
-        <Link to="/call">
-          <div className="link-content">Click here to start a Video Call</div>
-        </Link>      </div>
-      <div className="component-window">
-        <h2>Real Time Chat</h2>
-        <Link to="/chat">
-          <div className="link-content">Click here to start a Chat</div>
-        </Link>
-      </div>
-    </div>
+    <Container maxW="xl" centerContent>
+      <VStack spacing={4} align="stretch">
+        <Box borderWidth="1px" borderRadius="lg" overflow="hidden">
+          <Box p="6">
+            <Link as={RouterLink} to={"/videochat?meetingId=07927fc8-af0a-11ea-b338-064f26a5f90a&peerId="+user+"&userId="+user} style={{ display: 'block', width: '100%' }}>
+              <Button colorScheme="teal" variant="solid" w="full">Go to Video Chat</Button>
+            </Link>
+          </Box>
+        </Box>
+
+        <Box borderWidth="1px" borderRadius="lg" overflow="hidden">
+          <Box p="6">
+            <Link as={RouterLink} to={"/chat?u="+user} style={{ display: 'block', width: '100%' }}>
+              <Button colorScheme="teal" variant="solid" w="full">Go to Chat</Button>
+            </Link>
+          </Box>
+        </Box>
+      </VStack>
+    </Container>
   );
 };
 
-export default HomePage;
+export default Home;

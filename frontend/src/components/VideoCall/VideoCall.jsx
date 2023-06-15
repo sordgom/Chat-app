@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useLocation } from 'react-router-dom';
 import './VideoCall.css';
+import { Button, Box, VStack, HStack} from '@chakra-ui/react';
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -63,6 +64,7 @@ const CallComponent = () => {
       }
       pcSenderRef.current.createOffer().then(d => pcSenderRef.current.setLocalDescription(d));
     });
+
     pcSenderRef.current.addEventListener('connectionstatechange', event => {
       if (pcSenderRef.current.connectionState === 'connected') {
         console.log("horray!")
@@ -80,15 +82,19 @@ const CallComponent = () => {
   };
 
   return (
-    <div>
-      <button onClick={startCall} className="start-call">Start the call!</button>
-      <div className="container_row">
-        <video autoPlay ref={senderVideoRef} width="500" height="500" controls muted></video>
-        <div className="layer2">
-          <video autoPlay ref={receiverVideoRef} width="160" height="120" controls muted></video>
-        </div>
-      </div>
-    </div>
+    <VStack spacing={4}>
+      <Button colorScheme="teal" onClick={startCall}>
+        Start the call!
+      </Button>
+      <HStack spacing={10}>
+        <Box bg={'teal'} borderRadius="md" p={1}>
+          <video autoPlay ref={senderVideoRef} width="500" height="800" controls muted></video>
+        </Box>
+        <Box bg={'teal'} borderRadius="md" p={1}>
+          <video autoPlay ref={receiverVideoRef} controls muted></video>
+        </Box>
+      </HStack>
+    </VStack>
   );
 };
 
