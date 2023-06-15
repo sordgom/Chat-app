@@ -25,12 +25,13 @@ func main() {
 
 	if *server == "chat" {
 		fmt.Println("Distributed Chat App v0.01")
+		fmt.Println("Chat server is starting on :80822")
 		websocket.StartWebsocketServer()
 	} else if *server == "video" {
 		fmt.Println("Video Call server is starting on :8081")
 		videochat.SetupVideoChat()
 	} else if *server == "http" {
-		fmt.Println("http server is starting on :8082")
+		fmt.Println("http server is starting on :8080")
 		login.StartHTTPServer()
 	} else {
 		fmt.Println("invalid server. Available server: chat or video")

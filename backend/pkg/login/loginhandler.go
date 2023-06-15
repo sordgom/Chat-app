@@ -31,5 +31,5 @@ func StartHTTPServer() {
 
 	// Use default options
 	handler := cors.Default().Handler(r)
-	http.ListenAndServe(":8082", handler)
+	http.ListenAndServe(":8080", handler)
 }

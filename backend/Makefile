@@ -1,8 +1,11 @@
 run-call:
-	go run ./cmd/videochat/main.go
+	go run main.go --server=video
 
 run-chat:
-	go run ./cmd/chat/main.go
+	go run main.go --server=chat
+
+run-auth:
+	go run main.go --server=http
 
 unit-tests:
 	go test ./...
