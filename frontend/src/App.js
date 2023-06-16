@@ -5,12 +5,12 @@ import { ChakraProvider, Box } from '@chakra-ui/react';
 import theme from './theme';
 import Header from './components/Header/Header';
 import Footer from "./components/Footer/Footer";
-import VideoCall from "./components/VideoCall/VideoCall";
 import Home from "./components/Home/Home";
 import Landing from "./components/Landing/Landing";
 import Login from "./components/Login/Login";
 import Register from "./components/Register/Register";
 import Chat from "./components/Chat/Chat";
+import VideoCallWrapper from "./components/VideoCall/VideoCallWrapper";
 
 class App extends Component {
 
@@ -25,7 +25,7 @@ class App extends Component {
               <Route path="/register" element={<Register />} />
               <Route path="/login" element={<Login />} />
               <Route path="/home" element={<Home />} />
-              <Route path="/videochat" element={<VideoCall />} />
+              <Route path="/videochat" element={<VideoCallWrapper />} />
               <Route path="/chat"  element={<Chat />} />
             </Routes>
             <Footer></Footer>

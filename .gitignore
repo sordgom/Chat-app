@@ -12,9 +12,6 @@
 /build
 /cmd
 
-# Dependency directories
-/vendor
-
 # IDEs and editors
 /.idea
 *.swo
@@ -31,4 +28,4 @@
 .DS_Store
 Thumbs.db
 
-.env
+/backend/.env

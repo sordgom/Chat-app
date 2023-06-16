@@ -11,7 +11,7 @@ const Home = () => {
       <VStack spacing={4} align="stretch">
         <Box borderWidth="1px" borderRadius="lg" overflow="hidden">
           <Box p="6">
-            <Link as={RouterLink} to={"/videochat?meetingId=07927fc8-af0a-11ea-b338-064f26a5f90a&peerId="+user+"&userId="+user} style={{ display: 'block', width: '100%' }}>
+            <Link as={RouterLink} to={"/videochat?meetingId=07927fc8-af0a-11ea-b338-064f26a5f90a&userId="+user} style={{ display: 'block', width: '100%' }}>
               <Button colorScheme="teal" variant="solid" w="full">Go to Video Chat</Button>
             </Link>
           </Box>

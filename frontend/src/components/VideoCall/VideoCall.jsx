@@ -1,26 +1,49 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import axios from 'axios';
-import { useLocation } from 'react-router-dom';
 import './VideoCall.css';
-import { Button, Box, VStack, HStack} from '@chakra-ui/react';
+import {
+  Container,
+  Flex,
+  Textarea,
+  Box,
+  FormControl,
+  FormErrorMessage,
+  InputGroup,
+  InputRightElement,
+  Button,
+  Input,
+  VStack, 
+  HStack
+} from '@chakra-ui/react';
+class CallComponent extends React.Component {
+  constructor(props) {
+    super(props);
+    this.senderVideoRef = React.createRef();
+    this.receiverVideoRef = React.createRef();
+    this.pcSenderRef = null;
+    this.pcReceiverRef = null;
+    this.state = {
+      socketConn: '',
+      username: '',
+      message: '',
+      to: '',
+      isInvalid: false,
+      endpoint: 'http://localhost:8080',
+      contact: '',
+      contacts: [],
+      renderContactList: [],
+      chats: [],
+      chatHistory: [],
+      msgs: [],
+    };
+  }
 
-function useQuery() {
-  return new URLSearchParams(useLocation().search);
-}
+  componentDidMount() {
+    const params = new URLSearchParams(this.props.location.search);
+    const meetingId = params.get("meetingId");
+    const userId = params.get("userId");
 
-const CallComponent = () => {
-  const senderVideoRef = useRef(null);
-  const receiverVideoRef = useRef(null);
-  const pcSenderRef = useRef(null);
-  const pcReceiverRef = useRef(null);
-  let query = useQuery();
-
-  useEffect(() => {
-    const meetingId = query.get("meetingId");
-    const peerId = query.get("peerId");
-    const userId = query.get("userId");
-
-    pcSenderRef.current = new RTCPeerConnection({
+    this.pcSenderRef = new RTCPeerConnection({
       iceServers: [
         {
           urls: 'stun:stun.l.google.com:19302'
@@ -28,7 +51,7 @@ const CallComponent = () => {
       ]
     });
 
-    pcReceiverRef.current = new RTCPeerConnection({
+    this.pcReceiverRef = new RTCPeerConnection({
       iceServers: [
         {
           urls: 'stun:stun.l.google.com:19302'
@@ -36,66 +59,122 @@ const CallComponent = () => {
       ]
     });
 
-    pcSenderRef.current.onicecandidate = event => {
+    this.pcSenderRef.onicecandidate = event => {
       if (event.candidate === null) {
-        axios.post('/webrtc/sdp/m/' + meetingId + "/c/"+ userId + "/p/" + peerId + "/s/" + true,
-        {"sdp" : btoa(JSON.stringify(pcSenderRef.current.localDescription))}).then(response => {
-          pcSenderRef.current.setRemoteDescription(new RTCSessionDescription(JSON.parse(atob(response.data.Sdp))));
-        });
+        axios.post('/webrtc/sdp/m/' + meetingId + "/c/" + userId + "/p/" + this.state.username + "/s/" + true,
+          { "sdp": btoa(JSON.stringify(this.pcSenderRef.localDescription)) }).then(response => {
+            this.pcSenderRef.setRemoteDescription(new RTCSessionDescription(JSON.parse(atob(response.data.Sdp))));
+          });
       }
     };
 
-    pcReceiverRef.current.onicecandidate = event => {
+    this.pcReceiverRef.onicecandidate = event => {
       if (event.candidate === null) {
-        axios.post('/webrtc/sdp/m/' + meetingId + "/c/"+ userId + "/p/" + peerId + "/s/" + false, 
-        {"sdp" : btoa(JSON.stringify(pcReceiverRef.current.localDescription))}).then(response => {
-          pcReceiverRef.current.setRemoteDescription(new RTCSessionDescription(JSON.parse(atob(response.data.Sdp))));
-        });
+        axios.post('/webrtc/sdp/m/' + meetingId + "/c/" + userId + "/p/" + this.state.username + "/s/" + false,
+          { "sdp": btoa(JSON.stringify(this.pcReceiverRef.localDescription)) }).then(response => {
+            this.pcReceiverRef.setRemoteDescription(new RTCSessionDescription(JSON.parse(atob(response.data.Sdp))));
+          });
       }
     };
-  }, []);
+  }
+   // on change of input, set the value to the message state
+   onChange = event => {
+    this.setState({ [event.target.name]: event.target.value });
+  };
 
-  const startCall = () => {
-    navigator.mediaDevices.getUserMedia({video: true, audio: true}).then((stream) =>{
-      senderVideoRef.current.srcObject = stream;
+  addContact = async e => {
+    e.preventDefault();
+    try {
+      const res = await axios.post(`${this.state.endpoint}/verify-contact`, {
+        username: this.state.contact,
+      });
+
+      console.log(res.data);
+      if (!res.data.status) {
+        this.setState({ isInvalid: true });
+      } else {
+        // reset state on success
+        this.setState({ username: this.state.contact, isInvalid: false }, () => {
+          this.startCall();
+        });
+      }
+      
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  startCall = () => {
+    navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
+      this.senderVideoRef.current.srcObject = stream;
       var tracks = stream.getTracks();
       for (var i = 0; i < tracks.length; i++) {
-        pcSenderRef.current.addTrack(stream.getTracks()[i]);
+        this.pcSenderRef.addTrack(stream.getTracks()[i]);
       }
-      pcSenderRef.current.createOffer().then(d => pcSenderRef.current.setLocalDescription(d));
+      this.pcSenderRef.createOffer().then(d => this.pcSenderRef.setLocalDescription(d));
     });
 
-    pcSenderRef.current.addEventListener('connectionstatechange', event => {
-      if (pcSenderRef.current.connectionState === 'connected') {
+    this.pcSenderRef.addEventListener('connectionstatechange', event => {
+      if (this.pcSenderRef.connectionState === 'connected') {
         console.log("horray!")
       }
     });
 
-    pcReceiverRef.current.addTransceiver('video', {'direction': 'recvonly'});
-    pcReceiverRef.current.createOffer().then(d => pcReceiverRef.current.setLocalDescription(d));
+    this.pcReceiverRef.addTransceiver('video', { 'direction': 'recvonly' });
+    this.pcReceiverRef.createOffer().then(d => this.pcReceiverRef.setLocalDescription(d));
 
-    pcReceiverRef.current.ontrack = function (event) {
-      receiverVideoRef.current.srcObject = event.streams[0];
-      receiverVideoRef.current.autoplay = true;
-      receiverVideoRef.current.controls = true;
-    };
+    this.pcReceiverRef.ontrack = function (event) {
+      this.receiverVideoRef.current.srcObject = event.streams[0];
+      this.receiverVideoRef.current.autoplay = true;
+      this.receiverVideoRef.current.controls = true;
+    }.bind(this);
   };
 
-  return (
-    <VStack spacing={4}>
-      <Button colorScheme="teal" onClick={startCall}>
-        Start the call!
-      </Button>
-      <HStack spacing={10}>
-        <Box bg={'teal'} borderRadius="md" p={1}>
-          <video autoPlay ref={senderVideoRef} width="500" height="800" controls muted></video>
-        </Box>
-        <Box bg={'teal'} borderRadius="md" p={1}>
-          <video autoPlay ref={receiverVideoRef} controls muted></video>
-        </Box>
-      </HStack>
-    </VStack>
-  );
+  render() {
+    return (
+      <VStack spacing={4}>
+        <Box>
+            <FormControl isInvalid={this.state.isInvalid}>
+              <InputGroup size="md">
+                <Input
+                  variant="flushed"
+                  type="text"
+                  placeholder="Add Receiver"
+                  name="contact"
+                  value={this.state.contact}
+                  onChange={this.onChange}
+                />
+                <InputRightElement width="6rem">
+                  <Button
+                    colorScheme={'cyan'}
+                    h="2rem"
+                    size="lg"
+                    variant="solid"
+                    type="submit"
+                    onClick={this.addContact}
+                  >
+                    Add
+                  </Button>
+                </InputRightElement>
+              </InputGroup>
+              {!this.state.isContactInvalid ? (
+                ''
+              ) : (
+                <FormErrorMessage>contact does not exist</FormErrorMessage>
+              )}
+            </FormControl>
+          </Box>
+        <HStack spacing={10}>
+          <Box bg={'teal'} borderRadius="md" p={1}>
+            <video autoPlay ref={this.senderVideoRef} width="500" height="800" controls muted></video>
+          </Box>
+          <Box bg={'teal'} borderRadius="md" p={1}>
+            <video autoPlay ref={this.receiverVideoRef} controls muted></video>
+          </Box>
+        </HStack>
+      </VStack>
+    );
+  }
 };
 
 export default CallComponent;
