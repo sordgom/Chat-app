@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	auth "chat-go/pkg/AuthMiddleware"
 	"chat-go/pkg/redisrepo"
 
 	"github.com/gorilla/mux"
@@ -20,12 +19,10 @@ func StartHTTPServer() {
 	redisrepo.CreateFetchChatBetweenIndex()
 
 	r := mux.NewRouter()
-	r.Use(auth.AuthMiddleware)
 
 	r.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Simple Server")
 	}).Methods(http.MethodGet)
-
 	r.HandleFunc("/register", registerHandler).Methods(http.MethodPost)
 	r.HandleFunc("/login", loginHandler).Methods(http.MethodPost)
 	r.HandleFunc("/verify-contact", verifyContactHandler).Methods(http.MethodPost)
