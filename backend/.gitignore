@@ -1,0 +1,34 @@
+# Binaries, plugins, libs
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Output directories
+/dist
+/build
+/cmd
+
+# Dependency directories
+/vendor
+
+# IDEs and editors
+/.idea
+*.swo
+*.swp
+*.swn
+*.swm
+*.ter
+*.bak
+*.orig
+*.pyc
+*.class
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+.env
