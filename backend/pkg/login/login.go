@@ -5,8 +5,13 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"time"
 
 	"chat-go/pkg/redisrepo"
+
+	"github.com/dgrijalva/jwt-go"
+	"github.com/gorilla/sessions"
 )
 
 type userReq struct {
@@ -22,12 +27,23 @@ type response struct {
 	Total   int         `json:"total,omitempty"`
 }
 
+var store = sessions.NewCookieStore([]byte(os.Getenv("TTS_API_KEY")))
+
 func registerHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	u := &userReq{}
 	if err := json.NewDecoder(r.Body).Decode(u); err != nil {
 		http.Error(w, "error decoidng request object", http.StatusBadRequest)
+		return
+	}
+
+	session, _ := store.Get(r, "session-cookie")
+	session.Values["username"] = u.Username
+
+	err := session.Save(r, w)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -40,12 +56,35 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	u := &userReq{}
 	if err := json.NewDecoder(r.Body).Decode(u); err != nil {
-		http.Error(w, "error decoidng request object", http.StatusBadRequest)
+		http.Error(w, "error decoding request object", http.StatusBadRequest)
 		return
 	}
 
-	res := login(u)
-	json.NewEncoder(w).Encode(res)
+	res := login(u, w, r)
+
+	// create a response struct to hold the JWT token
+	tokenRes := struct {
+		Status  bool   `json:"status"`
+		Message string `json:"message"`
+		Token   string `json:"token,omitempty"`
+	}{
+		Status:  res.Status,
+		Message: res.Message,
+		Token:   "", // Token field will be empty if login fails
+	}
+
+	if res.Status {
+		// if login is successful, get the JWT token
+		token, err := createToken(u.Username)
+		if err != nil {
+			tokenRes.Status = false
+			tokenRes.Message = "Failed to retrieve token"
+		} else {
+			tokenRes.Token = token
+		}
+	}
+
+	json.NewEncoder(w).Encode(tokenRes)
 }
 
 func verifyContactHandler(w http.ResponseWriter, r *http.Request) {
@@ -63,7 +102,6 @@ func verifyContactHandler(w http.ResponseWriter, r *http.Request) {
 
 func chatHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-
 	// user1 user2
 	u1 := r.URL.Query().Get("u1")
 	u2 := r.URL.Query().Get("u2")
@@ -115,9 +153,7 @@ func register(u *userReq) *response {
 	return res
 }
 
-func login(u *userReq) *response {
-	// if invalid username and password return error
-	// if valid user create new session
+func login(u *userReq, w http.ResponseWriter, r *http.Request) *response {
 	res := &response{Status: true}
 
 	err := redisrepo.IsUserAuthentic(u.Username, u.Password)
@@ -191,4 +227,17 @@ func contactList(username string) *response {
 	res.Data = contactList
 	res.Total = len(contactList)
 	return res
+}
+
+func createToken(username string) (string, error) {
+	atClaims := jwt.MapClaims{}
+	atClaims["authorized"] = true
+	atClaims["username"] = username
+	atClaims["exp"] = time.Now().Add(time.Minute * 60).Unix() // Token expires after 60 minutes
+	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
+	token, err := at.SignedString([]byte(os.Getenv("TTS_API_KEY")))
+	if err != nil {
+		return "", err
+	}
+	return token, nil
 }

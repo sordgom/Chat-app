@@ -39,13 +39,23 @@ class Login extends Component {
     e.preventDefault();
 
     try {
+      let jwtToken= ''
+      if(localStorage.getItem('jwtToken')){
+        jwtToken = localStorage.getItem('jwtToken')
+      }
       const res = await axios.post(this.state.endpoint, {
         username: this.state.username,
         password: this.state.password,
+      },{
+        headers: {
+          'Authorization': `Bearer ${jwtToken}`
+        }
       });
 
-      console.log('register', res);
       if (res.data.status) {
+        // save the token in local storage
+        localStorage.setItem('jwtToken', res.data.token);
+
         const redirectTo = this.state.redirectTo + this.state.username;
         this.setState({ redirect: true, redirectTo });
       } else {
@@ -56,7 +66,7 @@ class Login extends Component {
       console.log(error);
       this.setState({ message: 'something went wrong', isInvalid: true });
     }
-  };
+};
 
   render() {
     return (

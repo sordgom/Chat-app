@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	auth "chat-go/pkg/AuthMiddleware"
 	"chat-go/pkg/redisrepo"
 
 	"github.com/gorilla/mux"
@@ -19,6 +20,8 @@ func StartHTTPServer() {
 	redisrepo.CreateFetchChatBetweenIndex()
 
 	r := mux.NewRouter()
+	r.Use(auth.AuthMiddleware)
+
 	r.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Simple Server")
 	}).Methods(http.MethodGet)
@@ -29,7 +32,13 @@ func StartHTTPServer() {
 	r.HandleFunc("/chat-history", chatHistoryHandler).Methods(http.MethodGet)
 	r.HandleFunc("/contact-list", contactListHandler).Methods(http.MethodGet)
 
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:3000"}, // change to your frontend url
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
+		AllowedHeaders:   []string{"Authorization", "Content-Type"},
+		AllowCredentials: true, // this allows cookies to be sent
+	})
 	// Use default options
-	handler := cors.Default().Handler(r)
+	handler := c.Handler(r)
 	http.ListenAndServe(":8080", handler)
 }
