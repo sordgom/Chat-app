@@ -8,7 +8,7 @@ function Footer() {
     return (
       <Box padding={8}>
         <Center>
-          <Heading size="sm">Bu by ChakraUI and Redis</Heading>
+          <Heading size="sm">Made By ChakraUI and Redis</Heading>
         </Center>
       </Box>
     );
