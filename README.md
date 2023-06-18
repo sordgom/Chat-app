@@ -12,3 +12,5 @@
 - Deploy the services to a cloud provider
 - Make the services scalable
 - Change Redis db to a more suitable/reliable db
+
+This project is based of: https://medium.com/@ramezemadaiesec/from-zero-to-fully-functional-video-conference-app-using-go-and-webrtc-7d073c9287da

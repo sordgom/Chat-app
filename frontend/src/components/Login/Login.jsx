@@ -24,7 +24,7 @@ class Login extends Component {
       password: '',
       message: '',
       isInvalid: false,
-      endpoint: 'http://localhost:8080/login',
+      endpoint: 'http://localhost:8080/signin',
       redirect: false,
       redirectTo: '/home?u=',
     };
@@ -51,11 +51,10 @@ class Login extends Component {
           'Authorization': `Bearer ${jwtToken}`
         }
       });
-
+      
       if (res.data.status) {
         // save the token in local storage
         localStorage.setItem('jwtToken', res.data.token);
-
         const redirectTo = this.state.redirectTo + this.state.username;
         this.setState({ redirect: true, redirectTo });
       } else {

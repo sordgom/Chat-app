@@ -2,7 +2,7 @@ package websocket
 
 import (
 	"chat-go/model"
-	"chat-go/pkg/redisrepo"
+	"chat-go/pkg/login/redisrepo"
 	"encoding/json"
 	"fmt"
 	"log"

@@ -1,13 +1,14 @@
 package login
 
 import (
-	"fmt"
 	"net/http"
 
-	"chat-go/pkg/redisrepo"
+	"chat-go/pkg/login/redisrepo"
 
+	gohandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/rs/cors"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.uber.org/zap"
 )
 
 func StartHTTPServer() {
@@ -18,24 +19,36 @@ func StartHTTPServer() {
 	// create indexes
 	redisrepo.CreateFetchChatBetweenIndex()
 
+	//logger
+	log, _ := zap.NewProduction()
+	defer log.Sync()
+
 	r := mux.NewRouter()
 
-	r.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Simple Server")
-	}).Methods(http.MethodGet)
+	suc := NewSignupController(log)
+	sic := NewSigninController(log)
+
+	r.HandleFunc("/signup", suc.SignupHandler).Methods(http.MethodPost)
+	r.HandleFunc("/signin", sic.SigninHandler).Methods(http.MethodPost)
+
 	r.HandleFunc("/register", registerHandler).Methods(http.MethodPost)
 	r.HandleFunc("/login", loginHandler).Methods(http.MethodPost)
 	r.HandleFunc("/verify-contact", verifyContactHandler).Methods(http.MethodPost)
 	r.HandleFunc("/chat-history", chatHistoryHandler).Methods(http.MethodGet)
 	r.HandleFunc("/contact-list", contactListHandler).Methods(http.MethodGet)
+	r.Path("/metrics").Handler(promhttp.Handler())
 
-	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000"}, // change to your frontend url
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
-		AllowedHeaders:   []string{"Authorization", "Content-Type"},
-		AllowCredentials: true, // this allows cookies to be sent
-	})
+	//Middleware
+	//tm := middleware.NewTokenMiddleware(log)
+	// r.Use(tm.TokenValidationMiddleware)
+
+	cors := gohandlers.CORS(
+		gohandlers.AllowedOrigins([]string{"http://localhost:3000"}), // your front end url
+		gohandlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE"}),
+		gohandlers.AllowedHeaders([]string{"Authorization", "Content-Type"}),
+		gohandlers.AllowCredentials(),
+	)
 	// Use default options
-	handler := c.Handler(r)
+	handler := cors(r)
 	http.ListenAndServe(":8080", handler)
 }

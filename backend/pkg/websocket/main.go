@@ -1,7 +1,7 @@
 package websocket
 
 import (
-	"chat-go/pkg/redisrepo"
+	"chat-go/pkg/login/redisrepo"
 	"fmt"
 	"net/http"
 	"strconv"

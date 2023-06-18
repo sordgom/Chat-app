@@ -2,17 +2,91 @@ package login
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"time"
 
-	"chat-go/pkg/redisrepo"
+	"chat-go/pkg/login/jwt"
+	"chat-go/pkg/login/redisrepo"
 
-	"github.com/dgrijalva/jwt-go"
-	"github.com/gorilla/sessions"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"go.uber.org/zap"
 )
+
+var (
+	signinRequests = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "signin_total",
+		Help: "Total number of signup requests",
+	})
+	signinSuccess = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "signin_success",
+		Help: "Successful signup requests",
+	})
+	signinFail = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "signin_fail",
+		Help: "Failed signup requests",
+	})
+	signinError = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "signin_error",
+		Help: "Erroneous signup requests",
+	})
+)
+
+var (
+	singupRequests = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "signup_total",
+		Help: "Total number of signup requests",
+	})
+	signupSuccess = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "signup_success",
+		Help: "Successful signup requests",
+	})
+	signupFail = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "signup_fail",
+		Help: "Failed signup requests",
+	})
+)
+
+// SignupController is the Signup route handler
+type SignupController struct {
+	logger            *zap.Logger
+	promSignupTotal   prometheus.Counter
+	promSignupSuccess prometheus.Counter
+	promSignupFail    prometheus.Counter
+}
+
+// NewSignupController returns a frsh Signup controller
+func NewSignupController(logger *zap.Logger) *SignupController {
+	return &SignupController{
+		logger:            logger,
+		promSignupTotal:   singupRequests,
+		promSignupSuccess: signupSuccess,
+		promSignupFail:    signupFail,
+	}
+}
+
+// SigninController is the Signin route handler
+type SigninController struct {
+	logger            *zap.Logger
+	promSigninTotal   prometheus.Counter
+	promSigninSuccess prometheus.Counter
+	promSigninFail    prometheus.Counter
+	promSigninError   prometheus.Counter
+}
+
+// NewSigninController returns a frsh Signin controller
+func NewSigninController(logger *zap.Logger) *SigninController {
+	return &SigninController{
+		logger:            logger,
+		promSigninTotal:   signinRequests,
+		promSigninSuccess: signinSuccess,
+		promSigninFail:    signinFail,
+		promSigninError:   signinError,
+	}
+}
 
 type userReq struct {
 	Username string `json:"username"`
@@ -27,7 +101,36 @@ type response struct {
 	Total   int         `json:"total,omitempty"`
 }
 
-var store = sessions.NewCookieStore([]byte(os.Getenv("TTS_API_KEY")))
+// we need this function to be private
+func getSignedToken() (string, error) {
+	// we make a JWT Token here with signing method of ES256 and claims.
+	// claims are attributes.
+	// Aud - audience
+	// Iss - issuer
+	// Exp - expiration of the Token
+	// token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+	// 	"Aud": "frontend.knowsearch.ml",
+	// 	"Iss": "knowsearch.ml",
+	// 	"Exp": string(time.Now().Add(time.Minute * 1).Unix()),
+	// })
+	claimsMap := jwt.ClaimsMap{
+		Aud: "frontend.knowsearch.ml",
+		Iss: "knowsearch.ml",
+		Exp: fmt.Sprint(time.Now().Add(time.Minute * 1).Unix()),
+	}
+
+	secret := jwt.GetSecret()
+	if secret == "" {
+		return "", errors.New("empty JWT secret")
+	}
+
+	header := "HS256"
+	tokenString, err := jwt.GenerateToken(header, claimsMap, secret)
+	if err != nil {
+		return tokenString, err
+	}
+	return tokenString, nil
+}
 
 func registerHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -35,15 +138,6 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 	u := &userReq{}
 	if err := json.NewDecoder(r.Body).Decode(u); err != nil {
 		http.Error(w, "error decoidng request object", http.StatusBadRequest)
-		return
-	}
-
-	session, _ := store.Get(r, "session-cookie")
-	session.Values["username"] = u.Username
-
-	err := session.Save(r, w)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -62,29 +156,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	res := login(u, w, r)
 
-	// create a response struct to hold the JWT token
-	tokenRes := struct {
-		Status  bool   `json:"status"`
-		Message string `json:"message"`
-		Token   string `json:"token,omitempty"`
-	}{
-		Status:  res.Status,
-		Message: res.Message,
-		Token:   "", // Token field will be empty if login fails
-	}
-
-	if res.Status {
-		// if login is successful, get the JWT token
-		token, err := createToken(u.Username)
-		if err != nil {
-			tokenRes.Status = false
-			tokenRes.Message = "Failed to retrieve token"
-		} else {
-			tokenRes.Token = token
-		}
-	}
-
-	json.NewEncoder(w).Encode(tokenRes)
+	json.NewEncoder(w).Encode(res)
 }
 
 func verifyContactHandler(w http.ResponseWriter, r *http.Request) {
@@ -129,6 +201,64 @@ func contactListHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
+// This will be supplied to the MUX router. It will be called when signin request is sent
+// if user not found or not validates, returns the Unauthorized error
+// if found, returns the JWT back. [How to return this?]
+func (ctrl *SigninController) SigninHandler(rw http.ResponseWriter, r *http.Request) {
+	// increment total singin requests
+	ctrl.promSigninTotal.Inc()
+	rw.Header().Set("Content-Type", "application/json")
+
+	u := &userReq{}
+	if err := json.NewDecoder(r.Body).Decode(u); err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(rw).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Error decoding request object",
+		})
+		return
+	}
+
+	res := login(u, rw, r)
+
+	tokenString, err := getSignedToken()
+	if err != nil {
+		ctrl.logger.Error("unable to sign the token", zap.Error(err))
+		rw.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(rw).Encode(map[string]interface{}{
+			"status":  "error",
+			"message": "Internal server error: unable to sign the token",
+		})
+		ctrl.promSigninError.Inc()
+		return
+	}
+
+	ctrl.logger.Info("Token sign", zap.String("token", tokenString))
+	rw.WriteHeader(http.StatusOK)
+	json.NewEncoder(rw).Encode(map[string]interface{}{
+		"status":  "success",
+		"message": "Token successfully signed",
+		"token":   tokenString,
+		"data":    res,
+	})
+	ctrl.promSigninSuccess.Inc()
+}
+
+// adds the user to the database of users
+func (ctrl *SignupController) SignupHandler(rw http.ResponseWriter, r *http.Request) {
+	// we increment the signup request counter
+	ctrl.promSignupTotal.Inc()
+
+	registerHandler(rw, r)
+	if r.Header["Username"] != nil {
+		ctrl.logger.Info("User created", zap.String("username", r.Header["Username"][0]))
+	}
+	rw.WriteHeader(http.StatusOK)
+	rw.Write([]byte("User Created"))
+	// this will mean the request was successfully added
+	ctrl.promSignupSuccess.Inc()
+}
+
 func register(u *userReq) *response {
 	// check if username in userset
 	// return error if exist
@@ -162,7 +292,6 @@ func login(u *userReq, w http.ResponseWriter, r *http.Request) *response {
 		res.Message = err.Error()
 		return res
 	}
-
 	return res
 }
 
@@ -227,17 +356,4 @@ func contactList(username string) *response {
 	res.Data = contactList
 	res.Total = len(contactList)
 	return res
-}
-
-func createToken(username string) (string, error) {
-	atClaims := jwt.MapClaims{}
-	atClaims["authorized"] = true
-	atClaims["username"] = username
-	atClaims["exp"] = time.Now().Add(time.Minute * 60).Unix() // Token expires after 60 minutes
-	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
-	token, err := at.SignedString([]byte(os.Getenv("TTS_API_KEY")))
-	if err != nil {
-		return "", err
-	}
-	return token, nil
 }
