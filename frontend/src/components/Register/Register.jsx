@@ -1,19 +1,20 @@
-import React, { Component } from 'react';
 import axios from 'axios';
+import React, { Component } from 'react';
 
 import {
+  Box,
+  Button,
   Container,
   FormControl,
-  FormLabel,
   FormErrorMessage,
   FormHelperText,
-  Box,
+  FormLabel,
   Input,
   Stack,
-  Button,
 } from '@chakra-ui/react';
 
 import { EditIcon } from '@chakra-ui/icons';
+import { withCookies } from 'react-cookie';
 import { Navigate } from 'react-router-dom';
 
 class Register extends Component {
@@ -30,11 +31,33 @@ class Register extends Component {
     };
   }
 
+  componentDidMount() {
+    this.performTokenValidation();
+  }
+
+  performTokenValidation = async () => {
+    const { cookies } = this.props;
+    const jwtToken = cookies.get('jwtToken') || '';
+    try {
+      const res = await axios.get("http://localhost:8080/check-status", {
+        headers: {
+          'Authorization': `Bearer ${jwtToken}`
+        }
+      });
+
+      if (res.data) {
+        this.setState({ redirect: true, redirectTo: '/home?u=' });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  
   // on change of input, set the value to the message state
   onChange = event => {
     this.setState({ [event.target.name]: event.target.value });
   };
-
+  
   onSubmit = async e => {
     e.preventDefault();
 
@@ -114,4 +137,4 @@ class Register extends Component {
   }
 }
 
-export default Register;
+export default withCookies(Register);

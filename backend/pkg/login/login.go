@@ -103,20 +103,10 @@ type response struct {
 
 // we need this function to be private
 func getSignedToken() (string, error) {
-	// we make a JWT Token here with signing method of ES256 and claims.
-	// claims are attributes.
-	// Aud - audience
-	// Iss - issuer
-	// Exp - expiration of the Token
-	// token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-	// 	"Aud": "frontend.knowsearch.ml",
-	// 	"Iss": "knowsearch.ml",
-	// 	"Exp": string(time.Now().Add(time.Minute * 1).Unix()),
-	// })
 	claimsMap := jwt.ClaimsMap{
-		Aud: "frontend.knowsearch.ml",
-		Iss: "knowsearch.ml",
-		Exp: fmt.Sprint(time.Now().Add(time.Minute * 1).Unix()),
+		Aud: "chat.xyz",
+		Iss: "chat_app",
+		Exp: fmt.Sprint(time.Now().Add(time.Hour * 3).Unix()),
 	}
 
 	secret := jwt.GetSecret()
@@ -132,33 +122,7 @@ func getSignedToken() (string, error) {
 	return tokenString, nil
 }
 
-func registerHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	u := &userReq{}
-	if err := json.NewDecoder(r.Body).Decode(u); err != nil {
-		http.Error(w, "error decoidng request object", http.StatusBadRequest)
-		return
-	}
-
-	res := register(u)
-	json.NewEncoder(w).Encode(res)
-}
-
-func loginHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	u := &userReq{}
-	if err := json.NewDecoder(r.Body).Decode(u); err != nil {
-		http.Error(w, "error decoding request object", http.StatusBadRequest)
-		return
-	}
-
-	res := login(u, w, r)
-
-	json.NewEncoder(w).Encode(res)
-}
-
+// Handlers
 func verifyContactHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -248,8 +212,17 @@ func (ctrl *SigninController) SigninHandler(rw http.ResponseWriter, r *http.Requ
 func (ctrl *SignupController) SignupHandler(rw http.ResponseWriter, r *http.Request) {
 	// we increment the signup request counter
 	ctrl.promSignupTotal.Inc()
+	rw.Header().Set("Content-Type", "application/json")
 
-	registerHandler(rw, r)
+	u := &userReq{}
+	if err := json.NewDecoder(r.Body).Decode(u); err != nil {
+		http.Error(rw, "error decoidng request object", http.StatusBadRequest)
+		return
+	}
+
+	res := register(u)
+	json.NewEncoder(rw).Encode(res)
+
 	if r.Header["Username"] != nil {
 		ctrl.logger.Info("User created", zap.String("username", r.Header["Username"][0]))
 	}
@@ -259,6 +232,7 @@ func (ctrl *SignupController) SignupHandler(rw http.ResponseWriter, r *http.Requ
 	ctrl.promSignupSuccess.Inc()
 }
 
+// Logic functions
 func register(u *userReq) *response {
 	// check if username in userset
 	// return error if exist

@@ -1,20 +1,21 @@
-import React, { Component } from 'react';
 import axios from 'axios';
+import React, { Component } from 'react';
 
 import {
+  Box,
+  Button,
   Container,
   FormControl,
-  FormLabel,
   FormErrorMessage,
-  Text,
-  Box,
+  FormLabel,
   Input,
   Stack,
-  Button,
+  Text,
 } from '@chakra-ui/react';
 
-import { Navigate } from 'react-router-dom';
 import { EditIcon } from '@chakra-ui/icons';
+import { withCookies } from 'react-cookie';
+import { Navigate } from 'react-router-dom';
 
 class Login extends Component {
   constructor(props) {
@@ -33,33 +34,66 @@ class Login extends Component {
   // on change of input, set the value to the message state
   onChange = event => {
     this.setState({ [event.target.name]: event.target.value });
+  };  
+
+  componentDidMount() {
+    this.performTokenValidation();
+  }
+
+  performTokenValidation = async () => {
+    const { cookies } = this.props;
+    const jwtToken = cookies.get('jwtToken') || '';
+    try {
+      const res = await axios.get("http://localhost:8080/check-status", {
+        headers: {
+          'Authorization': `Bearer ${jwtToken}`
+        }
+      });
+
+      if (res.data) {
+        this.setState({ redirect: true, redirectTo: '/home?u=' });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  
+  handleAuthentication = async () => {
+    const { cookies } = this.props;
+    const jwtToken = cookies.get('jwtToken') || '';
+
+    try {
+      const res = await axios.post(this.state.endpoint, {
+        username: this.state.username,
+        password: this.state.password,
+      }, {
+        headers: {
+          'Authorization': `Bearer ${jwtToken}`
+        }
+      });
+
+      return res.data;
+    } catch (error) {
+      console.log(error);
+      throw new Error('Authentication failed');
+    }
   };
 
   onSubmit = async e => {
     e.preventDefault();
 
     try {
-      let jwtToken= ''
-      if(localStorage.getItem('jwtToken')){
-        jwtToken = localStorage.getItem('jwtToken')
-      }
-      const res = await axios.post(this.state.endpoint, {
-        username: this.state.username,
-        password: this.state.password,
-      },{
-        headers: {
-          'Authorization': `Bearer ${jwtToken}`
-        }
-      });
       
-      if (res.data.status) {
-        // save the token in local storage
-        localStorage.setItem('jwtToken', res.data.token);
+      const authResponse = await this.handleAuthentication();
+      
+      if (authResponse.status) {
+        console.log(authResponse);
+        const { cookies } = this.props;
+        cookies.set('jwtToken', authResponse.token);
         const redirectTo = this.state.redirectTo + this.state.username;
         this.setState({ redirect: true, redirectTo });
       } else {
-        // on failed
-        this.setState({ message: res.data.message, isInvalid: true });
+        this.setState({ message: authResponse.message, isInvalid: true });
       }
     } catch (error) {
       console.log(error);
@@ -127,4 +161,4 @@ class Login extends Component {
   }
 }
 
-export default Login;
+export default withCookies(Login);

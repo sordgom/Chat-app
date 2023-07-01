@@ -3,6 +3,7 @@ package login
 import (
 	"net/http"
 
+	"chat-go/pkg/login/middleware"
 	"chat-go/pkg/login/redisrepo"
 
 	gohandlers "github.com/gorilla/handlers"
@@ -27,20 +28,20 @@ func StartHTTPServer() {
 
 	suc := NewSignupController(log)
 	sic := NewSigninController(log)
+	tm := middleware.NewTokenMiddleware(log)
 
+	// Not covered by middleware
 	r.HandleFunc("/signup", suc.SignupHandler).Methods(http.MethodPost)
 	r.HandleFunc("/signin", sic.SigninHandler).Methods(http.MethodPost)
-
-	r.HandleFunc("/register", registerHandler).Methods(http.MethodPost)
-	r.HandleFunc("/login", loginHandler).Methods(http.MethodPost)
-	r.HandleFunc("/verify-contact", verifyContactHandler).Methods(http.MethodPost)
-	r.HandleFunc("/chat-history", chatHistoryHandler).Methods(http.MethodGet)
-	r.HandleFunc("/contact-list", contactListHandler).Methods(http.MethodGet)
+	r.HandleFunc("/check-status", tm.TokenValidation).Methods(http.MethodGet)
 	r.Path("/metrics").Handler(promhttp.Handler())
 
 	//Middleware
-	//tm := middleware.NewTokenMiddleware(log)
 	// r.Use(tm.TokenValidationMiddleware)
+
+	r.HandleFunc("/verify-contact", verifyContactHandler).Methods(http.MethodPost)
+	r.HandleFunc("/chat-history", chatHistoryHandler).Methods(http.MethodGet)
+	r.HandleFunc("/contact-list", contactListHandler).Methods(http.MethodGet)
 
 	cors := gohandlers.CORS(
 		gohandlers.AllowedOrigins([]string{"http://localhost:3000"}), // your front end url
