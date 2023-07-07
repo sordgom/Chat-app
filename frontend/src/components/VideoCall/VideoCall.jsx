@@ -1,20 +1,17 @@
-import React from 'react';
-import axios from 'axios';
-import './VideoCall.css';
 import {
-  Container,
-  Flex,
-  Textarea,
   Box,
+  Button,
   FormControl,
   FormErrorMessage,
+  HStack,
+  Input,
   InputGroup,
   InputRightElement,
-  Button,
-  Input,
-  VStack, 
-  HStack
+  VStack
 } from '@chakra-ui/react';
+import axios from 'axios';
+import React from 'react';
+import './VideoCall.css';
 class CallComponent extends React.Component {
   constructor(props) {
     super(props);
@@ -28,7 +25,7 @@ class CallComponent extends React.Component {
       message: '',
       to: '',
       isInvalid: false,
-      endpoint: 'http://localhost:8080',
+      endpoint: 'http://localhost:8080/api',
       contact: '',
       contacts: [],
       renderContactList: [],
@@ -40,9 +37,9 @@ class CallComponent extends React.Component {
 
   componentDidMount() {
     const params = new URLSearchParams(this.props.location.search);
-    const meetingId = params.get("meetingId");
+    const meetingId = "07927fc8-af0a-11ea-b338-064f26a5f90a";
     const userId = params.get("userId");
-
+    
     this.pcSenderRef = new RTCPeerConnection({
       iceServers: [
         {
@@ -61,7 +58,7 @@ class CallComponent extends React.Component {
 
     this.pcSenderRef.onicecandidate = event => {
       if (event.candidate === null) {
-        axios.post('/webrtc/sdp/m/' + meetingId + "/c/" + userId + "/p/" + this.state.username + "/s/" + true,
+        axios.post('/webrtc/sdp/m/' + meetingId + "/c/" + this.state.username  + "/p/" + this.state.contact + "/s/" + true,
           { "sdp": btoa(JSON.stringify(this.pcSenderRef.localDescription)) }).then(response => {
             this.pcSenderRef.setRemoteDescription(new RTCSessionDescription(JSON.parse(atob(response.data.Sdp))));
           });
@@ -70,7 +67,7 @@ class CallComponent extends React.Component {
 
     this.pcReceiverRef.onicecandidate = event => {
       if (event.candidate === null) {
-        axios.post('/webrtc/sdp/m/' + meetingId + "/c/" + userId + "/p/" + this.state.username + "/s/" + false,
+        axios.post('/webrtc/sdp/m/' + meetingId + "/c/" + this.state.username  + "/p/" + this.state.contact + "/s/" + false,
           { "sdp": btoa(JSON.stringify(this.pcReceiverRef.localDescription)) }).then(response => {
             this.pcReceiverRef.setRemoteDescription(new RTCSessionDescription(JSON.parse(atob(response.data.Sdp))));
           });
@@ -82,25 +79,18 @@ class CallComponent extends React.Component {
     this.setState({ [event.target.name]: event.target.value });
   };
 
-  addContact = async e => {
-    e.preventDefault();
-    try {
-      const res = await axios.post(`${this.state.endpoint}/verify-contact`, {
-        username: this.state.contact,
+  addContact = async () => {
+    try{
+      const res = await axios.get(
+        `${this.state.endpoint}/users/me`
+      ,{
+        withCredentials: true, // include cookies in the request
+      })
+      this.setState({username : res.data.data.user.name, isInvalid: false}, () => {
+        this.startCall();
       });
-
-      console.log(res.data);
-      if (!res.data.status) {
-        this.setState({ isInvalid: true });
-      } else {
-        // reset state on success
-        this.setState({ username: this.state.contact, isInvalid: false }, () => {
-          this.startCall();
-        });
-      }
-      
-    } catch (error) {
-      console.error(error);
+    }catch(err){
+      console.log(err);
     }
   };
 
@@ -165,10 +155,10 @@ class CallComponent extends React.Component {
             </FormControl>
           </Box>
         <HStack spacing={10}>
-          <Box bg={'teal'} borderRadius="md" p={1}>
+          <Box bg={'cyan'} borderRadius="md" p={1}>
             <video autoPlay ref={this.senderVideoRef} width="500" height="800" controls muted></video>
           </Box>
-          <Box bg={'teal'} borderRadius="md" p={1}>
+          <Box bg={'cyan'} borderRadius="md" p={1}>
             <video autoPlay ref={this.receiverVideoRef} controls muted></video>
           </Box>
         </HStack>
