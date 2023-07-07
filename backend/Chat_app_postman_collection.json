@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "a1e56b5b-b20d-4fb3-9e45-a80f825affd4",
-		"name": "Golang_Fiber_JWT_RS256",
+		"_postman_id": "14390200-a211da39-a81b-4dfb-b3a6-06978734f7d9",
+		"name": "Chat_app",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "14791724"
 	},
@@ -102,7 +102,69 @@
 						}
 					},
 					"response": []
-				}
+				},
+				{
+					"name": "Get Contact List",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/api/auth/contact-list",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"contact-list"
+							]
+						}
+					},
+					"response": []
+				},{
+					"name": "Get Chat History",
+					"request": {
+					  "auth": {
+						"type": "noauth"
+					  },
+					  "method": "GET",
+					  "header": [],
+					  "url": {
+						"raw": "{{host}}/api/auth/chat-history?username1=Admin&username2=test&fromTS=0&toTS=99999999999",
+						"host": [
+						  "{{host}}"
+						],
+						"path": [
+						  "api",
+						  "auth",
+						  "chat-history"
+						],
+						"query": [
+						  {
+							"key": "username1",
+							"value": "Admin"
+						  },
+						  {
+							"key": "username2",
+							"value": "test"
+						  },
+						  {
+							"key": "fromTS",
+							"value": "0"
+						  },
+						  {
+							"key": "toTS",
+							"value": "1687063249"
+						  }
+						]
+					  }
+					},
+					"response": []
+				  }
+				  
 			]
 		},
 		{
@@ -125,28 +187,6 @@
 								"api",
 								"users",
 								"me"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get Contact List",
-					"request": {
-						"auth": {
-							"type": "noauth"
-						},
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{host}}/api/auth/contact-list",
-							"host": [
-								"{{host}}"
-							],
-							"path": [
-								"api",
-								"auth",
-								"contact-list"
 							]
 						}
 					},

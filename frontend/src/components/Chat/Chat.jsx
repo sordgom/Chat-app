@@ -128,6 +128,7 @@ class Chat extends Component {
     ,{
       withCredentials: true, // include cookies in the request
     });
+    console.log(res.data)
     if (res.data['data'] !== undefined) {
       this.setState({ contacts: res.data.data });
       this.renderContactList(res.data.data);
