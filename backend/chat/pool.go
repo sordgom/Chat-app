@@ -1,16 +1,17 @@
-package websocket
+package chat
 
 import (
-	"chat-go/model"
 	"fmt"
 	"log"
+
+	"github.com/sordgom/jwt-go/models"
 )
 
 type Pool struct {
 	Register   chan *Client
 	Unregister chan *Client
 	Clients    map[*Client]bool
-	Broadcast  chan *model.Chat
+	Broadcast  chan *models.Chat
 }
 
 func NewPool() *Pool {
@@ -18,7 +19,7 @@ func NewPool() *Pool {
 		Register:   make(chan *Client),
 		Unregister: make(chan *Client),
 		Clients:    make(map[*Client]bool),
-		Broadcast:  make(chan *model.Chat),
+		Broadcast:  make(chan *models.Chat),
 	}
 }
 

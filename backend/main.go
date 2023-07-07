@@ -1,22 +1,30 @@
 package main
 
 import (
-	"chat-go/pkg/login"
-	"chat-go/pkg/videochat"
-	"chat-go/pkg/websocket"
+	"context"
 	"flag"
 	"fmt"
 	"log"
 
-	"github.com/joho/godotenv"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/redis/go-redis/v9"
+
+	"github.com/sordgom/jwt-go/chat"
+	"github.com/sordgom/jwt-go/controllers"
+	"github.com/sordgom/jwt-go/initializers"
+	"github.com/sordgom/jwt-go/middleware"
+	"github.com/sordgom/jwt-go/redisrepo"
 )
 
 func init() {
-	// Load the environment file .env
-	err := godotenv.Load()
+	config, err := initializers.LoadConfig(".")
 	if err != nil {
-		log.Fatal("Unable to Load the env file.", err)
+		log.Fatal("Failed to load environment variables! \n", err.Error())
 	}
+	initializers.ConnectDB(&config)
+	initializers.ConnectRedis(&config)
 }
 
 func main() {
@@ -26,14 +34,65 @@ func main() {
 	if *server == "chat" {
 		fmt.Println("Distributed Chat App v0.01")
 		fmt.Println("Chat server is starting on :8082")
-		websocket.StartWebsocketServer()
-	} else if *server == "video" {
-		fmt.Println("Video Call server is starting on :8081")
-		videochat.SetupVideoChat()
+		chat.StartWebsocketServer()
 	} else if *server == "http" {
 		fmt.Println("http server is starting on :8080")
-		login.StartHTTPServer()
+		startLoginServer()
 	} else {
 		fmt.Println("invalid server. Available server: chat or video")
 	}
+}
+
+func startLoginServer() {
+	//Create the index for fetching chat between two users
+	redisrepo.CreateFetchChatBetweenIndex()
+
+	app := fiber.New()
+	api := fiber.New()
+
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:     "http://localhost:3000",
+		AllowHeaders:     "Origin, Content-Type, Accept",
+		AllowMethods:     "GET, POST",
+		AllowCredentials: true,
+	}))
+	app.Mount("/api", api)
+	app.Use(logger.New())
+
+	api.Route("/auth", func(auth fiber.Router) {
+		auth.Post("/register", controllers.SignUpUser)
+		auth.Post("/login", controllers.SignInUser)
+		auth.Get("/logout", middleware.DeserializeUser, controllers.LogoutUser)
+		auth.Get("/refresh", controllers.RefreshAccessToken)
+		auth.Get("/contact-list", middleware.DeserializeUser, controllers.ContactList)
+		auth.Get("/chat-history", controllers.ChatHistory)
+	})
+
+	api.Get("/users/me", middleware.DeserializeUser, controllers.GetUser)
+
+	ctx := context.TODO()
+	value, err := initializers.RedisClient.Get(ctx, "test").Result()
+
+	if err == redis.Nil {
+		fmt.Println("key: test does not exist")
+	} else if err != nil {
+		panic(err)
+	}
+
+	api.Get("/healthchecker", func(c *fiber.Ctx) error {
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"status":  "all good",
+			"message": value,
+		})
+	})
+
+	api.All("*", func(c *fiber.Ctx) error {
+		path := c.Path()
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"status":  "fail",
+			"message": fmt.Sprintf("Path: %v does not exists on this server", path),
+		})
+	})
+
+	log.Fatal(app.Listen(":8080"))
 }

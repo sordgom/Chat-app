@@ -1,14 +1,14 @@
-package websocket
+package chat
 
 import (
-	"chat-go/model"
-	"chat-go/pkg/login/redisrepo"
 	"encoding/json"
 	"fmt"
 	"log"
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/sordgom/jwt-go/models"
+	"github.com/sordgom/jwt-go/redisrepo"
 )
 
 type Client struct {
@@ -19,10 +19,10 @@ type Client struct {
 }
 
 type Message struct {
-	Type string     `json:"type"`
-	Body string     `json:"body"`
-	User string     `json:"user,omitempty"`
-	Chat model.Chat `json:"chat,omitempty"`
+	Type string      `json:"type"`
+	Body string      `json:"body"`
+	User string      `json:"user,omitempty"`
+	Chat models.Chat `json:"chat,omitempty"`
 }
 
 // Each client is also responsible for listening to incoming messages from its connection.

@@ -28,6 +28,4 @@
 .DS_Store
 Thumbs.db
 
-/backend/.env
-Login.excalidraw
-UserFlow.excalidraw
+/backend/app.env

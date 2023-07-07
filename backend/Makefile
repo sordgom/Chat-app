@@ -1,15 +1,18 @@
-run-call:
-	go run main.go --server=video
+dev: 
+	docker-compose up -d
 
-run-chat:
-	go run main.go --server=chat
+dev-down:
+	docker-compose down
 
-run-auth:
-	go run main.go --server=http
+start-server:
+	air
 
-unit-tests:
-	go test ./...
-
-build:
-	docker build -t backend .
-
+install-modules:
+	go get github.com/go-playground/validator/v10
+	go get -u github.com/gofiber/fiber/v2
+	go get -u github.com/golang-jwt/jwt/v4
+	go get github.com/redis/go-redis/v9
+	go get github.com/satori/go.uuid
+	go get github.com/spf13/viper
+	go get gorm.io/driver/postgres
+	go get -u gorm.io/gorm

@@ -21,13 +21,13 @@ class Login extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      username: '',
-      password: '',
+      email: 'admin@admin.com',
+      password: 'password123',
       message: '',
       isInvalid: false,
-      endpoint: 'http://localhost:8080/signin',
+      endpoint: 'http://localhost:8080/api/auth/login',
       redirect: false,
-      redirectTo: '/home?u=',
+      redirectTo: '/home',
       tokenValidated: false, // Flag to indicate if token validation has been performed
     };
   }
@@ -36,54 +36,16 @@ class Login extends Component {
   onChange = event => {
     this.setState({ [event.target.name]: event.target.value });
   };  
-  
-  componentDidMount() {
-    this.performTokenValidation();
-  }
-
-  performTokenValidation = async () => {
-    const { cookies } = this.props;
-    const jwtToken = cookies.get('jwtToken') || '';
-    try {
-      const res = await axios.get("http://localhost:8080/check-status", {
-        headers: {
-          'Authorization': `Bearer ${jwtToken}`
-        }
-      });
-      const user = this.decodeJWT(jwtToken).Usr;
-      if (res.data) {
-        const redirectTo = this.state.redirectTo + user;
-        this.setState({ redirect: true, redirectTo });
-      }
-      this.setState({ tokenValidated: true }); // Set the flag to indicate token validation is done
-    } catch (error) {
-      console.log(error);
-      this.setState({ tokenValidated: true }); // Set the flag to indicate token validation is done
-    }
-  };
-
-  decodeJWT = (token) => {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = window.atob(base64);
-    return JSON.parse(jsonPayload);
-  }  
 
   handleAuthentication = async () => {
-    const { cookies } = this.props;
-    const jwtToken = cookies.get('jwtToken') || '';
-
     try {
-      const res = await axios.post(this.state.endpoint, {
-        username: this.state.username,
+      const response = await axios.post(this.state.endpoint, {
+        email: this.state.email,
         password: this.state.password,
-      }, {
-        headers: {
-          'Authorization': `Bearer ${jwtToken}`
-        }
+      },{
+        withCredentials: true, // include cookies in the request
       });
-
-      return res.data;
+      return response.data;
     } catch (error) {
       console.log(error);
       throw new Error('Authentication failed');
@@ -94,14 +56,10 @@ class Login extends Component {
     e.preventDefault();
 
     try {
-      
       const authResponse = await this.handleAuthentication();
-      
-      if (authResponse.status) {       
-        console.log(authResponse);
-        const { cookies } = this.props;
-        cookies.set('jwtToken', authResponse.token);
-        const redirectTo = this.state.redirectTo + this.state.username;
+      const { cookies } = this.props;
+      if (authResponse.status === 'success' || cookies.loggedIn === 'true') {       
+        const redirectTo = this.state.redirectTo ;
         this.setState({ redirect: true, redirectTo });
       } else {
         this.setState({ message: authResponse.message, isInvalid: true });
@@ -113,30 +71,23 @@ class Login extends Component {
 };
 
   render() {
-    const { redirect, redirectTo, tokenValidated } = this.state;
+    const { redirect, redirectTo } = this.state;
 
-    if (!tokenValidated) {
-      return null; // Render nothing while token validation is in progress
-    }
     if (redirect) {
       return <Navigate to={redirectTo} replace={true} />;
     }
     return (
       <div>
-        {this.state.redirect && (
-          <Navigate to={this.state.redirectTo} replace={true}></Navigate>
-        )}
-
         <Container marginBlockStart={10} textAlign={'left'} maxW="2xl">
           <Box borderRadius="lg" padding={10} borderWidth="2px">
             <Stack spacing={5}>
               <FormControl isInvalid={this.state.isInvalid}>
-                <FormLabel>Username</FormLabel>
+                <FormLabel>Email</FormLabel>
                 <Input
                   type="text"
-                  placeholder="Username"
-                  name="username"
-                  value={this.state.username}
+                  placeholder="Email"
+                  name="email"
+                  value={this.state.email}
                   onChange={this.onChange}
                 />
               </FormControl>
@@ -153,7 +104,7 @@ class Login extends Component {
                   ''
                 ) : (
                   <FormErrorMessage>
-                    invalid username or password
+                    invalid email or password
                   </FormErrorMessage>
                 )}
               </FormControl>

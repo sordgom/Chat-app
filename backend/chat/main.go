@@ -1,7 +1,6 @@
-package websocket
+package chat
 
 import (
-	"chat-go/pkg/login/redisrepo"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -37,8 +36,6 @@ func setupRoutes() {
 }
 
 func StartWebsocketServer() {
-	redisClient := redisrepo.InitialiseRedis()
-	defer redisClient.Close()
 	setupRoutes()
 	http.ListenAndServe(":8082", nil)
 }

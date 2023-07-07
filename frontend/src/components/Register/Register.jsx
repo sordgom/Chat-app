@@ -22,41 +22,18 @@ class Register extends Component {
     super(props);
     this.state = {
       username: '',
+      email: '',
       password: '',
+      confirmPassword: '',
       message: '',
       isInvalid: '',
-      endpoint: 'http://localhost:8080/signup',
+      endpoint: 'http://localhost:8080/api/auth/register',
       redirect: false,
-      redirectTo: '/home?u=',
+      redirectTo: '/home',
       tokenValidated: false, // Flag to indicate if token validation has been performed
     };
   }
 
-  componentDidMount() {
-    this.performTokenValidation();
-  }
-
-  performTokenValidation = async () => {
-    const { cookies } = this.props;
-    const jwtToken = cookies.get('jwtToken') || '';
-    try {
-      const res = await axios.get("http://localhost:8080/check-status", {
-        headers: {
-          'Authorization': `Bearer ${jwtToken}`
-        }
-      });
-
-      const user = this.decodeJWT(jwtToken).Usr;
-      if (res.data) {
-        const redirectTo = this.state.redirectTo + user;
-        this.setState({ redirect: true, redirectTo });
-      }
-      this.setState({ tokenValidated: true }); // Set the flag to indicate token validation is done
-    } catch (error) {
-      console.log(error);
-      this.setState({ tokenValidated: true }); // Set the flag to indicate token validation is done
-    }
-  };
 
   decodeJWT = (token) => {
     const base64Url = token.split('.')[1];
@@ -73,42 +50,45 @@ class Register extends Component {
   onSubmit = async e => {
     e.preventDefault();
 
+    const { username, email, password, confirmPassword } = this.state;
+
+    if (password !== confirmPassword) {
+      this.setState({
+        message: 'Passwords do not match',
+        isInvalid: true,
+      });
+      return;
+    }
     try {
       const res = await axios.post(this.state.endpoint, {
-        username: this.state.username,
+        name: this.state.username,
+        email: this.state.email,
         password: this.state.password,
+        passwordConfirm: this.state.confirmPassword,
       });
 
-      console.log('register', res);
-      if (res.data.status) {
-        const redirectTo = this.state.redirectTo + this.state.username;
+      console.log(res.data.status)
+      if (res.data.status==='success') {
+        const redirectTo = this.state.redirectTo ;
         this.setState({ redirect: true, redirectTo });
       } else {
         // on failed
         this.setState({ message: res.data.message, isInvalid: true });
       }
     } catch (error) {
-      console.log(error);
+      console.log(error.response.data);
       this.setState({ message: 'something went wrong', isInvalid: true });
     }
   };
 
-  render() {
-    const { redirect, redirectTo, tokenValidated } = this.state;
+  render() {    
+    const { redirect, redirectTo } = this.state;
 
-    if (!tokenValidated) {
-      return null; // Render nothing while token validation is in progress
-    }
     if (redirect) {
       return <Navigate to={redirectTo} replace={true} />;
     }
-    
     return (
       <div>
-        {this.state.redirect && (
-          <Navigate to={this.state.redirectTo} replace={true}></Navigate>
-        )}
-
         <Container marginBlockStart={10} textAlign={'left'} maxW="2xl">
           <Box borderRadius="lg" padding={10} borderWidth="2px">
             <Stack spacing={5}>
@@ -129,6 +109,23 @@ class Register extends Component {
                 )}
                 {/* <FormHelperText>use a unique username</FormHelperText> */}
               </FormControl>
+              <FormControl isInvalid={this.state.isInvalid}>
+                <FormLabel>Email</FormLabel>
+                <Input
+                  type="text"
+                  placeholder="Email"
+                  name="email"
+                  value={this.state.email}
+                  onChange={this.onChange}
+                />
+
+                {!this.state.isInvalid ? (
+                  <></>
+                ) : (
+                  <FormErrorMessage>{this.state.message}</FormErrorMessage>
+                )}
+                {/* <FormHelperText>use a unique email</FormHelperText> */}
+              </FormControl>
               <FormControl>
                 <FormLabel>Password</FormLabel>
                 <Input
@@ -138,7 +135,22 @@ class Register extends Component {
                   value={this.state.password}
                   onChange={this.onChange}
                 />
-                <FormHelperText>use a dummy password</FormHelperText>
+                <FormHelperText>Password must be more than 8 characters</FormHelperText>
+              </FormControl>
+              <FormControl isInvalid={this.state.isInvalid}>
+                <FormLabel>Confirm Password</FormLabel>
+                <Input
+                  type="password"
+                  placeholder="Confirm Password"
+                  name="confirmPassword"
+                  value={this.state.confirmPassword}
+                  onChange={this.onChange}
+                />
+                {!this.state.isInvalid ? (
+                  <></>
+                ) : (
+                  <FormErrorMessage>{this.state.message}</FormErrorMessage>
+                )}
               </FormControl>
               <Button
                 size="lg"

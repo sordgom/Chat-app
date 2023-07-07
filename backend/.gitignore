@@ -1,31 +1,22 @@
-# Binaries, plugins, libs
+# Binaries for programs and plugins
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
+
+# Test binary, built with `go test -c`
 *.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
-# Output directories
-/dist
-/build
-/cmd
-
-# IDEs and editors
-/.idea
-*.swo
-*.swp
-*.swn
-*.swm
-*.ter
-*.bak
-*.orig
-*.pyc
-*.class
-
-# OS-specific files
+# Dependency directories (remove the comment below to include it)
+# vendor/
 .DS_Store
-Thumbs.db
-
-.env
+TODO.md
+logs.txt
+.idea/
+secret.md
+app.env
+tmp

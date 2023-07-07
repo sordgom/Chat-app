@@ -1,4 +1,4 @@
-package model
+package models
 
 type Chat struct {
 	ID        string `json:"id"`

@@ -1,21 +1,18 @@
-import React, { Component } from 'react';
-import axios from 'axios';
-
-import SocketConnection from '../../socket-connection';
-
 import {
+  Box,
+  Button,
   Container,
   Flex,
-  Textarea,
-  Box,
   FormControl,
   FormErrorMessage,
+  Input,
   InputGroup,
   InputRightElement,
-  Button,
-  Input,
+  Textarea,
 } from '@chakra-ui/react';
-
+import axios from 'axios';
+import React, { Component } from 'react';
+import SocketConnection from '../../socket-connection';
 import ChatHistory from './ChatHistory';
 import ContactList from './ContactList';
 
@@ -28,7 +25,7 @@ class Chat extends Component {
       message: '',
       to: '',
       isInvalid: false,
-      endpoint: 'http://localhost:8080',
+      endpoint: 'http://localhost:8080/api',
       contact: '',
       contacts: [],
       renderContactList: [],
@@ -42,8 +39,9 @@ class Chat extends Component {
     const queryParams = new URLSearchParams(window.location.search);
     const user = queryParams.get('u');
     this.setState({ username: user });
+    this.getUser();
     this.getContacts(user);
-
+    
     const conn = new SocketConnection();
     await this.setState({ socketConn: conn });
     // conn.connect(msg => console.log('message received'));
@@ -92,11 +90,44 @@ class Chat extends Component {
     }
   };
 
+  addContact = async () => {
+    try{
+      const res = await axios.get(
+        `${this.state.endpoint}/users/me`
+      ,{
+        withCredentials: true, // include cookies in the request
+      })
+      this.setState({username : res.data.data.user.name});
+
+    let contacts = this.state.contacts;
+    contacts.unshift({
+      username: this.state.contact,
+      last_activity: Date.now() / 1000,
+    });
+    this.renderContactList(contacts);
+    }catch(err){
+      console.log(err);
+    }
+   
+  };
+  getUser = async () => {
+    try{
+      const res = await axios.get(
+        `${this.state.endpoint}/users/me`
+      ,{
+        withCredentials: true, // include cookies in the request
+      })
+      this.setState({username : res.data.data.user.name});
+    }catch(err){
+      console.log(err);
+    }
+  };
   getContacts = async user => {
     const res = await axios.get(
-      `${this.state.endpoint}/contact-list?username=${user}`
-    );
-    console.log(res.data);
+      `${this.state.endpoint}/auth/contact-list`
+    ,{
+      withCredentials: true, // include cookies in the request
+    });
     if (res.data['data'] !== undefined) {
       this.setState({ contacts: res.data.data });
       this.renderContactList(res.data.data);
@@ -104,44 +135,48 @@ class Chat extends Component {
   };
 
   fetchChatHistory = async (u1 = 'user1', u2 = 'user2') => {
-    const res = await axios.get(
-      `http://localhost:8080/chat-history?u1=${u1}&u2=${u2}`
-    );
-
-    console.log(res.data, res.data.data.reverse());
-    if (res.data.status && res.data['data'] !== undefined) {
-      this.setState({ chats: res.data.data.reverse() });
-      this.renderChatHistory(u1, res.data.data.reverse());
-    } else {
-      this.setState({ chatHistory: [] });
-    }
-  };
-
-  addContact = async e => {
-    e.preventDefault();
-    try {
-      const res = await axios.post(`${this.state.endpoint}/verify-contact`, {
-        username: this.state.contact,
+    try{
+      const res = await axios.get(
+        `http://localhost:8080/api/auth/chat-history?username1=${u1}&username2=${u2}&fromTS=0&toTS=1686884674`
+      ,{
+        withCredentials: true, // include cookies in the request
       });
-
-      console.log(res.data);
-      if (!res.data.status) {
-        this.setState({ isInvalid: true });
+      if (res.data.status && res.data['data'] !== undefined) {
+        this.setState({ chats: res.data.data.reverse() });
+        this.renderChatHistory(u1, res.data.data.reverse());
       } else {
-        // reset state on success
-        this.setState({ isInvalid: false });
-
-        let contacts = this.state.contacts;
-        contacts.unshift({
-          username: this.state.contact,
-          last_activity: Date.now() / 1000,
-        });
-        this.renderContactList(contacts);
+        this.setState({ chatHistory: [] });
       }
-    } catch (error) {
-      console.error(error);
-    }
+    }catch(err){
+      console.log(err?.response?.data);
+    }   
   };
+
+  // addContact = async e => {
+    // e.preventDefault();
+    // try {
+    //   const res = await axios.post(`${this.state.endpoint}/verify-contact`, {
+    //     username: this.state.contact,
+    //   });
+
+    //   console.log(res.data);
+    //   if (!res.data.status) {
+    //     this.setState({ isInvalid: true });
+    //   } else {
+    //     // reset state on success
+    //     this.setState({ isInvalid: false });
+
+    //     let contacts = this.state.contacts;
+    //     contacts.unshift({
+    //       username: this.state.contact,
+    //       last_activity: Date.now() / 1000,
+    //     });
+    //     this.renderContactList(contacts);
+    //   }
+    // } catch (error) {
+    //   console.error(error);
+    // }
+  // };
 
   renderChatHistory = (currentUser, chats) => {
     const history = ChatHistory(currentUser, chats);

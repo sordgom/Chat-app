@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"log"
 
-	"chat-go/model"
+	"github.com/sordgom/jwt-go/models"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -45,10 +45,10 @@ func Deserialise(res interface{}) []Document {
 	return nil
 }
 
-func DeserialiseChat(docs []Document) []model.Chat {
-	chats := []model.Chat{}
+func DeserialiseChat(docs []Document) []models.Chat {
+	chats := []models.Chat{}
 	for _, doc := range docs {
-		var c model.Chat
+		var c models.Chat
 		json.Unmarshal(doc.Payload, &c)
 
 		c.ID = doc.ID
@@ -58,13 +58,13 @@ func DeserialiseChat(docs []Document) []model.Chat {
 	return chats
 }
 
-func DeserialiseContactList(contacts []redis.Z) []model.ContactList {
-	contactList := make([]model.ContactList, 0, len(contacts))
+func DeserialiseContactList(contacts []redis.Z) []models.ContactList {
+	contactList := make([]models.ContactList, 0, len(contacts))
 
 	// improvement tip: use switch to get type of contact.Member
 	// handle unknown type accordingly
 	for _, contact := range contacts {
-		contactList = append(contactList, model.ContactList{
+		contactList = append(contactList, models.ContactList{
 			Username:     contact.Member.(string),
 			LastActivity: int64(contact.Score),
 		})
