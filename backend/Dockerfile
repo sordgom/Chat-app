@@ -1,11 +1,15 @@
-FROM golang:1.12-alpine
+# syntax=docker/dockerfile:1
+FROM golang:1.16-alpine
 
-RUN apk add --no-cache bash ca-certificates git gcc g++ libc-dev
+WORKDIR /api
 
-RUN mkdir /app
-ADD . /app/
-WORKDIR /app
-
+COPY go.mod ./
+COPY go.sum ./
 RUN go mod download
-RUN go build -v
 
+COPY . .
+
+RUN go build -o /api
+EXPOSE 8080 8081 8082
+
+CMD [ "/api" ]

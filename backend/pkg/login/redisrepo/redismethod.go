@@ -89,6 +89,7 @@ func CreateChat(c *model.Chat) (string, error) {
 	fmt.Println("chat key", chatKey)
 
 	by, _ := json.Marshal(c)
+	fmt.Println(by)
 
 	// redis-cli
 	// SYNTAX: JSON.SET key $ json_in_string

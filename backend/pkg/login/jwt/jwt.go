@@ -25,6 +25,7 @@ const (
 type ClaimsMap struct {
 	Aud string
 	Iss string
+	Usr string
 	Exp string
 }
 

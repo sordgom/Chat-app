@@ -27,7 +27,8 @@ class Register extends Component {
       isInvalid: '',
       endpoint: 'http://localhost:8080/signup',
       redirect: false,
-      redirectTo: '/chat?u=',
+      redirectTo: '/home?u=',
+      tokenValidated: false, // Flag to indicate if token validation has been performed
     };
   }
 
@@ -45,13 +46,24 @@ class Register extends Component {
         }
       });
 
+      const user = this.decodeJWT(jwtToken).Usr;
       if (res.data) {
-        this.setState({ redirect: true, redirectTo: '/home?u=' });
+        const redirectTo = this.state.redirectTo + user;
+        this.setState({ redirect: true, redirectTo });
       }
+      this.setState({ tokenValidated: true }); // Set the flag to indicate token validation is done
     } catch (error) {
       console.log(error);
+      this.setState({ tokenValidated: true }); // Set the flag to indicate token validation is done
     }
   };
+
+  decodeJWT = (token) => {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = window.atob(base64);
+    return JSON.parse(jsonPayload);
+  }  
   
   // on change of input, set the value to the message state
   onChange = event => {
@@ -82,6 +94,15 @@ class Register extends Component {
   };
 
   render() {
+    const { redirect, redirectTo, tokenValidated } = this.state;
+
+    if (!tokenValidated) {
+      return null; // Render nothing while token validation is in progress
+    }
+    if (redirect) {
+      return <Navigate to={redirectTo} replace={true} />;
+    }
+    
     return (
       <div>
         {this.state.redirect && (

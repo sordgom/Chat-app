@@ -7,6 +7,10 @@
 - [x] Create a video chat app service using WebRTC
 - [x] Create an authentication service using Redis
 
+## Issues
+
+- If JWT Token is valid, user gets redirected to /home, the problem is the user itself doesnt get picked up by the frontend, so the user is not logged in. I need to find a way to pass the user to the frontend.
+
 ## Todo
 
 - Deploy the services to a cloud provider

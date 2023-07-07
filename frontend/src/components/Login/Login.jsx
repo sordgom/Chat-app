@@ -28,6 +28,7 @@ class Login extends Component {
       endpoint: 'http://localhost:8080/signin',
       redirect: false,
       redirectTo: '/home?u=',
+      tokenValidated: false, // Flag to indicate if token validation has been performed
     };
   }
 
@@ -35,7 +36,7 @@ class Login extends Component {
   onChange = event => {
     this.setState({ [event.target.name]: event.target.value });
   };  
-
+  
   componentDidMount() {
     this.performTokenValidation();
   }
@@ -49,15 +50,25 @@ class Login extends Component {
           'Authorization': `Bearer ${jwtToken}`
         }
       });
-
+      const user = this.decodeJWT(jwtToken).Usr;
       if (res.data) {
-        this.setState({ redirect: true, redirectTo: '/home?u=' });
+        const redirectTo = this.state.redirectTo + user;
+        this.setState({ redirect: true, redirectTo });
       }
+      this.setState({ tokenValidated: true }); // Set the flag to indicate token validation is done
     } catch (error) {
       console.log(error);
+      this.setState({ tokenValidated: true }); // Set the flag to indicate token validation is done
     }
   };
-  
+
+  decodeJWT = (token) => {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = window.atob(base64);
+    return JSON.parse(jsonPayload);
+  }  
+
   handleAuthentication = async () => {
     const { cookies } = this.props;
     const jwtToken = cookies.get('jwtToken') || '';
@@ -86,7 +97,7 @@ class Login extends Component {
       
       const authResponse = await this.handleAuthentication();
       
-      if (authResponse.status) {
+      if (authResponse.status) {       
         console.log(authResponse);
         const { cookies } = this.props;
         cookies.set('jwtToken', authResponse.token);
@@ -102,6 +113,14 @@ class Login extends Component {
 };
 
   render() {
+    const { redirect, redirectTo, tokenValidated } = this.state;
+
+    if (!tokenValidated) {
+      return null; // Render nothing while token validation is in progress
+    }
+    if (redirect) {
+      return <Navigate to={redirectTo} replace={true} />;
+    }
     return (
       <div>
         {this.state.redirect && (

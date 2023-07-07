@@ -102,10 +102,11 @@ type response struct {
 }
 
 // we need this function to be private
-func getSignedToken() (string, error) {
+func getSignedToken(username string) (string, error) {
 	claimsMap := jwt.ClaimsMap{
 		Aud: "chat.xyz",
 		Iss: "chat_app",
+		Usr: username,
 		Exp: fmt.Sprint(time.Now().Add(time.Hour * 3).Unix()),
 	}
 
@@ -185,7 +186,7 @@ func (ctrl *SigninController) SigninHandler(rw http.ResponseWriter, r *http.Requ
 
 	res := login(u, rw, r)
 
-	tokenString, err := getSignedToken()
+	tokenString, err := getSignedToken(u.Username)
 	if err != nil {
 		ctrl.logger.Error("unable to sign the token", zap.Error(err))
 		rw.WriteHeader(http.StatusInternalServerError)
