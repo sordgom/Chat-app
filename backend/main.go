@@ -16,6 +16,7 @@ import (
 	"github.com/sordgom/jwt-go/initializers"
 	"github.com/sordgom/jwt-go/middleware"
 	"github.com/sordgom/jwt-go/redisrepo"
+	"github.com/sordgom/jwt-go/videochat"
 )
 
 func init() {
@@ -38,6 +39,9 @@ func main() {
 	} else if *server == "http" {
 		fmt.Println("http server is starting on :8080")
 		startLoginServer()
+	} else if *server == "video" {
+		fmt.Println("Video Chat server is starting on :8081")
+		videochat.SetupVideoChat()
 	} else {
 		fmt.Println("invalid server. Available server: chat or video")
 	}
