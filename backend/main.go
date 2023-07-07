@@ -65,7 +65,7 @@ func startLoginServer() {
 		auth.Get("/logout", middleware.DeserializeUser, controllers.LogoutUser)
 		auth.Get("/refresh", controllers.RefreshAccessToken)
 		auth.Get("/contact-list", middleware.DeserializeUser, controllers.ContactList)
-		auth.Get("/chat-history", controllers.ChatHistory)
+		auth.Get("/chat-history", middleware.DeserializeUser, controllers.ChatHistory)
 	})
 
 	api.Get("/users/me", middleware.DeserializeUser, controllers.GetUser)

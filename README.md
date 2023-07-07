@@ -16,6 +16,8 @@
 - Create a video chat app service using WebRTC
 - Make the services scalable
 
+[![Run in Postman](https://run.pstmn.io/button.svg)](https://app.getpostman.com/run-collection/14390200-fb88bc8e-5710-4dce-9619-0f379111aa39?action=collection%2Ffork&source=rip_markdown&collection-url=entityId%3D14390200-fb88bc8e-5710-4dce-9619-0f379111aa39%26entityType%3Dcollection%26workspaceId%3D8e7cf06c-8991-43d1-8068-311d94c52000)
+
 ## UI
 
 #### Landing page
@@ -29,6 +31,10 @@
 #### Chat page
 
 ![image](https://gcdnb.pbrd.co/images/CUsExP9GrPRG.png?o=1)
+
+#### Video Chat page
+
+![image](https://gcdnb.pbrd.co/images/pWlutEV6rbam.png?o=1)
 
 Credits to:
 
