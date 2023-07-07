@@ -16,6 +16,22 @@
 - Create a video chat app service using WebRTC
 - Make the services scalable
 
+## UI
+
+#### Landing page
+
+![image](https://gcdnb.pbrd.co/images/fzFoZEpqQXcS.png?o=1) 
+
+#### Login page
+
+![image](https://gcdnb.pbrd.co/images/q2jdjOQXvQ1T.png?o=1)
+
+#### Chat page
+
+![image](https://gcdnb.pbrd.co/images/CUsExP9GrPRG.png?o=1)
+
 Credits to:
-https://medium.com/@ramezemadaiesec/from-zero-to-fully-functional-video-conference-app-using-go-and-webrtc-7d073c9287da
-https://codevoweb.com/how-to-properly-use-jwt-for-authentication-in-golang/
+
+- https://medium.com/@ramezemadaiesec/from-zero-to-fully-functional-video-conference-app-using-go-and-webrtc-7d073c9287da
+
+- https://codevoweb.com/how-to-properly-use-jwt-for-authentication-in-golang/
