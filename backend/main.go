@@ -31,9 +31,8 @@ func init() {
 func main() {
 	server := flag.String("server", "", "http,websocket")
 	flag.Parse()
-
-	if *server == "chat" {
-		fmt.Println("Distributed Chat App v0.01")
+	fmt.Println("Distributed Chat App v0.01")
+	if *server == "text" {
 		fmt.Println("Chat server is starting on :8082")
 		chat.StartWebsocketServer()
 	} else if *server == "http" {
@@ -43,7 +42,7 @@ func main() {
 		fmt.Println("Video Chat server is starting on :8081")
 		videochat.SetupVideoChat()
 	} else {
-		fmt.Println("invalid server. Available server: chat or video")
+		fmt.Println("invalid server. Available server: text or video")
 	}
 }
 
@@ -67,7 +66,10 @@ func startLoginServer() {
 		auth.Post("/register", controllers.SignUpUser)
 		auth.Post("/login", controllers.SignInUser)
 		auth.Get("/logout", middleware.DeserializeUser, controllers.LogoutUser)
+		auth.Get("/verify", controllers.CheckUserExists)
 		auth.Get("/refresh", controllers.RefreshAccessToken)
+
+		auth.Post("/add-contact", controllers.UpdateContactList)
 		auth.Get("/contact-list", middleware.DeserializeUser, controllers.ContactList)
 		auth.Get("/chat-history", middleware.DeserializeUser, controllers.ChatHistory)
 	})

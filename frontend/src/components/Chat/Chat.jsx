@@ -25,6 +25,7 @@ class Chat extends Component {
       message: '',
       to: '',
       isInvalid: false,
+      isContactInvalid: false,
       endpoint: 'http://localhost:8080/api',
       contact: '',
       contacts: [],
@@ -92,19 +93,28 @@ class Chat extends Component {
 
   addContact = async () => {
     try{
-      const res = await axios.get(
-        `${this.state.endpoint}/users/me`
-      ,{
-        withCredentials: true, // include cookies in the request
-      })
-      this.setState({username : res.data.data.user.name});
+      //verify the contact
+      const res = await axios.get(`${this.state.endpoint}/auth/verify?user=`+this.state.contact);
+     
+      if (res.data.status==='fail') {
+        this.setState({ isContactInvalid: true });
+        this.setState({ isInvalid: true });
 
-    let contacts = this.state.contacts;
-    contacts.unshift({
-      username: this.state.contact,
-      last_activity: Date.now() / 1000,
-    });
-    this.renderContactList(contacts);
+      } else {
+        // reset state on success
+        this.setState({ isContactInvalid: false });
+        this.setState({ isInvalid: false });
+        let res = await axios.post(`${this.state.endpoint}/auth/add-contact?contact=`+this.state.contact,{
+          withCredentials: true, // include cookies in the request
+        });
+        console.log(res.data);
+        let contacts = this.state.contacts;
+        contacts.unshift({
+          username: this.state.contact,
+          last_activity: Date.now() / 1000,
+        });
+        this.renderContactList(contacts);
+      }
     }catch(err){
       console.log(err);
     }
@@ -128,7 +138,6 @@ class Chat extends Component {
     ,{
       withCredentials: true, // include cookies in the request
     });
-    console.log(res.data)
     if (res.data['data'] !== undefined) {
       this.setState({ contacts: res.data.data });
       this.renderContactList(res.data.data);
@@ -229,7 +238,7 @@ class Chat extends Component {
               {!this.state.isContactInvalid ? (
                 ''
               ) : (
-                <FormErrorMessage>contact does not exist</FormErrorMessage>
+                <FormErrorMessage>User does not exist</FormErrorMessage>
               )}
             </FormControl>
           </Box>

@@ -3,9 +3,6 @@ import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
 const Home = () => {
-  const queryParams = new URLSearchParams(window.location.search);
-  const user = queryParams.get('u');
-
   return (
     <Container maxW="xl" centerContent>
       <VStack spacing={4} align="stretch">

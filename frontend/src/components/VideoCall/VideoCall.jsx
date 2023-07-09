@@ -36,9 +36,7 @@ class CallComponent extends React.Component {
   }
 
   componentDidMount() {
-    const params = new URLSearchParams(this.props.location.search);
     const meetingId = "07927fc8-af0a-11ea-b338-064f26a5f90a";
-    const userId = params.get("userId");
     
     this.pcSenderRef = new RTCPeerConnection({
       iceServers: [
