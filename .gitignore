@@ -29,3 +29,12 @@
 Thumbs.db
 
 /backend/app.env
+backend/app-env-configmap.yaml
+backend/pgadmin-deployment.yaml
+backend/pgadmin-service.yaml
+backend/postgres-deployment.yaml
+backend/postgres-db-persistentvolumeclaim.yaml
+backend/postgres-service.yaml
+backend/redis-db-persistentvolumeclaim.yaml
+backend/redis-deployment.yaml
+backend/redis-service.yaml

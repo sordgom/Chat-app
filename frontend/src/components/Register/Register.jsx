@@ -50,7 +50,7 @@ class Register extends Component {
   onSubmit = async e => {
     e.preventDefault();
 
-    const { username, email, password, confirmPassword } = this.state;
+    const { password, confirmPassword } = this.state;
 
     if (password !== confirmPassword) {
       this.setState({

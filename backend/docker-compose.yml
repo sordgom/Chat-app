@@ -6,16 +6,16 @@ services:
     ports:
       - '6500:5432'
     volumes:
-      - progresDB:/var/lib/postgresql/data
+      - postgres-db:/var/lib/postgresql/data
     env_file:
       - ./app.env
-  pgAdmin:
+  pgadmin:
     image: dpage/pgadmin4
-    container_name: pgAdmin
+    container_name: pgadmin
     env_file:
       - ./app.env
     ports:
-      - "5050:80"
+      - '5050:80'
   redis:
     image: redis/redis-stack:latest
     container_name: redis
@@ -23,7 +23,7 @@ services:
       - '6379:6379'
       - '8001:8001'
     volumes:
-      - redisDB:/data
+      - redis-db:/data
 volumes:
-  redisDB:
-  progresDB:
+  redis-db:
+  postgres-db:

@@ -257,6 +257,22 @@ func LogoutUser(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"status": "success"})
 }
 
+func CheckUserExists(c *fiber.Ctx) error {
+	name := c.Query("user")
+
+	var user models.User
+	err := initializers.DB.First(&user, "name = ?", name).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return c.Status(fiber.StatusOK).JSON(fiber.Map{"status": "fail", "message": "User not found"})
+		} else {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"status": "error", "message": "Something went wrong"})
+		}
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"status": "success", "exists": true})
+}
+
 func ChatHistory(c *fiber.Ctx) error {
 	username1 := c.Query("username1")
 	username2 := c.Query("username2")
@@ -280,4 +296,16 @@ func ContactList(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"status": "success", "data": contactList, "total": len(contactList)})
+}
+
+func UpdateContactList(c *fiber.Ctx) error {
+	user := c.Locals("user").(models.UserResponse)
+	contact := c.Query("contact")
+
+	err := redisrepo.UpdateContactList(user.Name, contact)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "unable to fetch chat history. please try again later."})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"status": "success", "data": "Contact List updated"})
 }
