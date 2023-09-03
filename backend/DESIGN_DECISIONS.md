@@ -10,9 +10,9 @@
 * [cookie-parser](https://www.npmjs.com/package/cookie-parser) - Parse HTTP request cookies
 * [postgreSQL](https://www.postgresql.org/) - Open source relational database
 * [Golang](https://golang.org/) - Open source programming language that makes it easy to build simple, reliable, and efficient software
-* [Fiber] (https://gofiber.io/) - Express inspired web framework written in Go
-* [GORM] (https://gorm.io/) - The fantastic ORM library for Golang
-* [Docker] (https://www.docker.com/) - Docker is a set of platform as a service products that use OS-level virtualization to deliver software in packages called containers
+* [Fiber](https://gofiber.io/) - Express inspired web framework written in Go
+* [GORM](https://gorm.io/) - The fantastic ORM library for Golang
+* [Docker](https://www.docker.com/) - Docker is a set of platform as a service products that use OS-level virtualization to deliver software in packages called containers
   
 ### JWT Access & Refresh Token Design Decisions
 
@@ -28,9 +28,9 @@
 
 ### Technologies used
 
-* [Websockets] WebSockets is an advanced technology that makes it possible to open an interactive communication session between the user's browser and a server. With this API, you can send messages to a server and receive event-driven responses without having to poll the server for a reply.
+* [Websockets](https://websockets.readthedocs.io/) is an advanced technology that makes it possible to open an interactive communication session between the user's browser and a server. With this API, you can send messages to a server and receive event-driven responses without having to poll the server for a reply.
 * [Redis](https://redis.io/) - Chats and user contact list are stored on Redis memory
   
 ### Chat Feature Design Decisions
 
-* Websockets: This allows for a more seamless chat experience, as users can see messages as they are sent and received.
+* [Websockets](https://websockets.readthedocs.io/): This allows for a more seamless chat experience, as users can see messages as they are sent and received.

@@ -17,6 +17,7 @@ import (
 	"github.com/sordgom/jwt-go/middleware"
 	"github.com/sordgom/jwt-go/redisrepo"
 	"github.com/sordgom/jwt-go/videochat"
+	"github.com/sordgom/jwt-go/voicechat"
 )
 
 func init() {
@@ -41,6 +42,9 @@ func main() {
 	} else if *server == "video" {
 		fmt.Println("Video Chat server is starting on :8081")
 		videochat.SetupVideoChat()
+	} else if *server == "voice" {
+		fmt.Println("Voice Chat server is starting on :8083")
+		voicechat.SetupVoiceChat()
 	} else {
 		fmt.Println("invalid server. Available server: text or video")
 	}
@@ -75,6 +79,7 @@ func startLoginServer() {
 	})
 
 	api.Get("/users/me", middleware.DeserializeUser, controllers.GetUser)
+	api.Post("/token", controllers.CreateAccessToken)
 
 	ctx := context.TODO()
 	value, err := initializers.RedisClient.Get(ctx, "test").Result()
